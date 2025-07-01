@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalakar - Authentic Nepali Crafts</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide-react@latest/dist/lucide-react.js"></script>
+    <script src="https://unpkg.com/lucide-icons@latest/dist/lucide.min.js"></script>
+
+    <style>
+        /* --- Base & Font Styles --- */
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #FFFBF5; 
+            scroll-behavior: smooth;
+            transition: background-image 0.5s ease-in-out;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+        .font-display { font-family: 'Playfair Display', serif; font-weight: 800; }
+
+        /* --- Dynamic Backgrounds --- */
+        .default-bg {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .jewelry-bg {
+            background-image: linear-gradient(rgba(255, 251, 245, 0.85), rgba(255, 251, 245, 0.85)), url(https://images.pexels.com/photos/248077/pexels-photo-248077.jpeg);
+        }
+        .cosmetics-bg {
+            background-image: linear-gradient(rgba(255, 251, 245, 0.8), rgba(255, 251, 245, 0.8)), url(https://images.pexels.com/photos/1749452/pexels-photo-1749452.jpeg);
+        }
+
+        /* --- Page Scroll Progress Bar --- */
+        #scroll-progress-bar-container {
+            position: fixed; top: 50%; right: 20px; transform: translateY(-50%);
+            height: 200px; width: 4px; background-color: rgba(0,0,0,0.1);
+            border-radius: 2px; z-index: 9999; opacity: 0; transition: opacity 0.3s;
+        }
+        body.scrolling #scroll-progress-bar-container { opacity: 1; }
+        #scroll-progress-bar { width: 100%; height: 0; background-color: #7C3AED; border-radius: 2px; }
+
+        /* --- Animation & Transition Utilities --- */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        @keyframes popIn {
+            from { transform: scale(0.95) translateY(10px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .pop-in { animation: popIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        @keyframes slideInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .slide-in-up { opacity: 0; animation: slideInUp 0.6s ease-out forwards; }
+        
+        /* --- Component Styles --- */
+        .modal-backdrop { background-color: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; }
+        .sidebar { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); transform: translateX(100%); }
+        .sidebar.open { transform: translateX(0); }
+        .wishlist-toggle-btn.active i, .wishlist-toggle-btn-card.active { color: #ef4444; fill: #ef4444; border-color: #ef4444; }
+
+        /* --- Product Card Advanced Hover & Classy Touch --- */
+        .product-card { 
+            position: relative; 
+            transition: transform 0.3s ease, box-shadow 0.3s ease; 
+            border: 1px solid #f0e9e9;
+            border-radius: 1rem; /* Softer, classier corners */
+        }
+        .product-card:hover { 
+            transform: translateY(-10px); 
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); 
+            z-index: 10; 
+            border-color: #e2d1f8; 
+        }
+        .product-card .actions-overlay { opacity: 0; transition: opacity 0.3s ease; }
+        .product-card:hover .actions-overlay { opacity: 1; }
+        .product-card .action-button { transform: translateY(10px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .product-card:hover .action-button { transform: translateY(0); opacity: 1; }
+        .product-card .tag { position: absolute; top: 12px; left: 12px; padding: 4px 8px; font-size: 10px; font-weight: bold; text-transform: uppercase; border-radius: 4px; z-index: 2; }
+        .tag.premium { background-color: #d97706; color: white; }
+        
+        /* Description on hover */
+        .product-card .description-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background-color: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 20;
+        }
+        .product-card:hover .description-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* --- Category Choice Section --- */
+        .category-choice-card { transition: transform 0.3s, box-shadow 0.3s; }
+        .category-choice-card:hover { transform: scale(1.05); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2); }
+        
+        /* --- Payment & Delivery Method Selection --- */
+        .payment-option, .delivery-option {
+            border: 2px solid #e5e7eb;
+            transition: border-color 0.2s;
+            cursor: pointer;
+        }
+        .payment-option.selected, .delivery-option.selected {
+            border-color: #7c3aed;
+        }
+
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #fffbf5; }
+        ::-webkit-scrollbar-thumb { background: #a78bfa; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
+    </style>
+</head>
+<body class="text-gray-800 default-bg">
+    <div id="scroll-progress-bar-container"><div id="scroll-progress-bar"></div></div>
+    
+    <div id="app" class="relative">
+        <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-30 shadow-md border-b border-gray-200"></header>
+        <main>
+            <section id="category-choice" class="min-h-screen flex flex-col items-center justify-center text-center p-6"></section>
+            <div id="shop-content" class="hidden"></div>
+        </main>
+        <div id="modal-container" class="fixed inset-0 z-50 pointer-events-none"></div>
+        <div id="sidebar-container" class="fixed top-0 right-0 h-full z-40 pointer-events-none"></div>
+        <div id="toast-container" class="fixed bottom-5 right-5 z-[10000] space-y-2"></div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // ===================================================================================
+        // I. DATABASE & STATE
+        // ===================================================================================
+        const db = {
+            products: [
+                 // Jewelry
+                 { id: "J001", mainCat: "Jewelry", category: "Rings", name: "Patan Silver Mandala Ring", price: 2500, images: ["https://cdn.mysagestore.com/74db5e032e6fecb07f3130f646bb2751/contents/R167/R167SZ8_SVRING.jpg"], spec: "Hand-carved by Patan artisans, pure 925 sterling silver.", description: "This exquisite ring is a testament to the master craftsmanship of Patan's artisans. Featuring a detailed Mandala design on pure 925 sterling silver, it embodies spiritual symbolism and timeless elegance. Perfect for daily wear or special occasions.", tags: ['featured', 'high-demand'], stock: 15, sizes: ["6", "7", "8", "9"] },
+                { id: "J002", mainCat: "Jewelry", category: "Rings", name: "Premium Gold Weave Ring", price: 12500, images: ["https://goldarts.co.uk/cdn/shop/files/22-10-24jewellery_24_1800x1800.jpg?v=1729674224"], spec: "Intricate weave pattern, hallmarked 22k gold.", description: "A luxurious piece for those who appreciate fine detail. This ring features an intricate weave pattern, meticulously crafted from hallmarked 22k gold. Its robust design and radiant shine make it a statement of pure sophistication.", tags: ['premium'], stock: 5, sizes: ["7", "8"] },
+                { id: "J003", mainCat: "Jewelry", category: "Necklaces", name: "Tibetan Turquoise Necklace", price: 4500, images: ["https://classicrockcouture.com/cdn/shop/files/IMG-0842_grande.jpg?v=1706037703"], spec: "Polished Tibetan turquoise on a silver chain.", description: "Capture the essence of the Himalayas with this stunning necklace. It features genuine, polished Tibetan turquoise stones, known for their vibrant color and protective properties, set on a delicate yet durable silver chain.", tags: ['featured', 'festive-sale'], stock: 20, colors: ["Blue", "Green-Blue"] },
+                { id: "J005", mainCat: "Jewelry", category: "Earrings", name: "Pearl Stud Earrings", price: 950, images: ["http://images.squarespace-cdn.com/content/v1/608a705d359126541d56050a/1648563094750-TZ8D3YVPJA762V6EH1E3/gold-stud-earrings-dots-Militza-Ortiz-Jewellery.jpg"], spec: "Classic pearl studs for everyday elegance.", description: "Simplicity at its finest. These classic pearl stud earrings are a must-have in any jewelry collection. Their lustrous shine and timeless design provide a touch of elegance to any outfit, from casual to formal.", tags: ['affordable', 'high-demand'], stock: 50 },
+                { id: "J008", mainCat: "Jewelry", category: "Anklets", name: "Silver Ghungroo Anklet", price: 2100, images: ["https://assets.myntassets.com/fl_progressive/h_960,q_80,w_720/v1/assets/images/9643855/2019/7/12/b21f0fb9-199c-4c4c-993e-10e035963fcb1562931641544-Priyaasi-Set-of-2-Oxidised-German-Silver-Ghungroo-Anklets-wi-1.jpg"], spec: "Traditional silver anklet with tiny sonorous bells.", description: "Embrace tradition with the gentle chime of this silver Ghungroo anklet. Each tiny bell is carefully attached to a beautifully crafted silver chain, creating a piece that is both visually and audibly delightful.", tags: ['featured'], stock: 18 },
+                { id: "J014", mainCat: "Jewelry", category: "Earrings", name: "Classic Jhumka Earrings", price: 4200, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqT23JA8jm_1cMNcxgdFqMY9tjm5Pry-dX4g&s"], spec: "Classic tiered jhumka earrings with pearl drops.", description: "A celebration of heritage design, these tiered jhumka earrings are a festive essential. Intricately detailed and finished with delicate pearl drops, they sway gracefully with every movement.", tags: ['featured', 'festive-sale'], stock: 14 },
+                { id: "J015", mainCat: "Jewelry", category: "Pendant Sets", name: "Filigree Pendant Set", price: 5800, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLbt8WyHnjGfcSXZiBMbve262I_jdP-YMbtQ&s"], spec: "Delicate silver filigree work, with matching earrings.", description: "Showcasing the delicate art of filigree, this pendant set is a masterpiece of precision. The intricate floral design, crafted from fine silver threads, comes with perfectly matching earrings for a complete, elegant look.", tags: ['new-arrival'], stock: 10 },
+                { id: "J016", mainCat: "Jewelry", category: "Brooches", name: "Enamel Peacock Brooch", price: 3200, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTb_fOgYI9Rv7_klV2-zjKAxQd3txNrBm_dYw&s"], spec: "Vibrant enamel work on a beautifully crafted peacock brooch.", description: "Add a splash of color and artistry to your attire with this enamel peacock brooch. The vibrant colors and detailed craftsmanship capture the majestic beauty of Nepal's national bird.", tags: [], stock: 25 },
+                { id: "J017", mainCat: "Jewelry", category: "Nose Pins", name: "Golden Sun Nose Pin", price: 1800, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT631OcagG5IMgXy_2VQesMc4MlbYk_uG5tMA&s"], spec: "A simple yet elegant 18k gold plated sun motif nose pin.", description: "Shine bright with this elegant Golden Sun nose pin. The simple yet striking sun motif is plated in 18k gold, offering a touch of understated glamour for a modern, chic look.", tags: ['affordable', 'high-demand'], stock: 40 },
+                { id: "J018", mainCat: "Jewelry", category: "Bracelets", name: "Seven-Chakra Bracelet", price: 2200, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxnXMRth7CktTPJ9TJN3coYNtpFNE_yF-C4g&s"], spec: "Features seven different semi-precious stones.", description: "Align your energy with this beautiful Seven-Chakra bracelet. It features seven carefully selected semi-precious stones, each representing one of the body's energy centers. A meaningful and stylish accessory.", tags: ['new-arrival', 'featured'], stock: 30 },
+                { id: "J019", mainCat: "Jewelry", category: "Necklaces", name: "Traditional Chandra Haar", price: 18500, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShIoIfdOUqjhQ4kG3d_S49OQnl_yNjuRTWqQ&s"], spec: "A majestic multi-layered necklace, embodying Nepali heritage.", description: "The Chandra Haar is the epitome of Nepali bridal and festive wear. This majestic, multi-layered necklace is a symbol of prosperity and heritage, crafted with exceptional attention to detail to be treasured for generations.", tags: ['premium', 'festive-sale'], stock: 4 },
+
+                // Cosmetics
+                { id: "C001", mainCat: "Cosmetics", category: "Skincare", name: "Mustang Rose Water Mist", price: 1200, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHDC5Cnqx-Jldt66PZ4fH4F4qRm0cB4PrKEg&s"], spec: "100% pure steam-distilled rose water from Mustang.", description: "Refresh and hydrate your skin with the purest rose water from the high-altitude roses of Mustang. This 100% pure, steam-distilled mist tones, soothes, and revitalizes, leaving your skin with a natural, dewy glow.", tags: ['featured', 'high-demand'], stock: 40 },
+                { id: "C002", mainCat: "Cosmetics", category: "Skincare", name: "High-Himalayan Juniper Soap", price: 800, images: ["https://himalayanmartonline.com/wp-content/uploads/2018/03/hotsprings-juniper-1.jpg"], spec: "Handmade soap with wild-harvested juniper for cleansing.", description: "Experience a purifying cleanse with our handmade Juniper soap. Made with wild-harvested juniper from the High Himalayas, it has natural antiseptic properties that leave your skin feeling clean, fresh, and invigorated.", tags: ['affordable', 'new-arrival'], stock: 60 },
+                { id: "C003", mainCat: "Cosmetics", category: "Makeup", name: "Natural Gajal Eyeliner", price: 600, images: ["https://naturalmum.com.au/cdn/shop/files/benecos-kajal-eyeliner-1-13g-9-colours-makeup-1-336.webp?v=1736486481"], spec: "Soothes and defines eyes, made with natural ingredients.", description: "Define your eyes the traditional way with our Natural Gajal. Made from a blend of natural ingredients and soothing oils, it glides on smoothly to create a bold, dramatic look while also nourishing the delicate eye area.", tags: ['affordable'], stock: 100 },
+                { id: "C005", mainCat: "Cosmetics", category: "Makeup", name: "Beetroot Lip & Cheek Tint", price: 1100, images: ["https://www.moncornerb.com/24704-product_cover/organic-beetroot-cheek-lip-tint-ere-perez.jpg"], spec: "Natural, buildable color from beetroot extracts.", description: "Get a healthy, natural flush with our Beetroot Lip & Cheek Tint. This versatile product provides a buildable, long-lasting color from natural beetroot extracts. It's lightweight, non-sticky, and perfect for a sheer or bold look.", tags: ['new-arrival', 'high-demand'], stock: 35 },
+                { id: "C006", mainCat: "Cosmetics", category: "Skincare", name: "Saffron & Turmeric Face Pack", price: 1800, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS5KuuYFmKZuhxkhhcbvy0N4EEhlfPt8vaKCw&s"], spec: "A brightening face pack for radiant, glowing skin.", description: "Unveil your skin's natural radiance. This luxurious face pack combines the brightening powers of saffron and the purifying properties of turmeric to improve complexion, reduce blemishes, and leave your skin glowing.", tags: ['premium', 'featured'], stock: 15 },
+                { id: "C007", mainCat: "Cosmetics", category: "Hair Care", name: "Bhringraj Herbal Hair Oil", price: 1650, images: ["https://www.biotique.com/cdn/shop/files/8904352004568_2-min_c9676cd8-5feb-4a52-9db2-59d5fdfae1ea.jpg?v=1670245366"], spec: "An ancient Ayurvedic recipe for hair strength and vitality.", description: "Revitalize your hair with this ancient Ayurvedic recipe. Our Bhringraj Herbal Hair Oil is a potent blend of herbs known to strengthen roots, reduce hair fall, and promote healthy, lustrous growth.", tags: ['new-arrival'], stock: 28 },
+                { id: "C008", mainCat: "Cosmetics", category: "Skincare", name: "Shea & Chiuri Butter Body Lotion", price: 1950, images: ["https://www.lavenour.com/cdn/shop/files/shea_butter_body_lotion_600x600.webp?v=1725103589"], spec: "Deeply moisturizing lotion with wild-harvested Chiuri butter.", description: "Indulge your skin in deep hydration with this rich body lotion. It combines the nourishing properties of Shea butter with wild-harvested Chiuri butter from Nepal, leaving your skin soft, supple, and moisturized all day.", tags: [], stock: 22 },
+                { id: "C009", mainCat: "Cosmetics", category: "Makeup", name: "Mint & Beeswax Lip Balm", price: 550, images: ["https://static.wixstatic.com/media/cd8cb9_91c7947f62ad458e8188c55687aabb6d~mv2_d_4912_3264_s_4_2.jpg/v1/fill/w_520,h_346,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/cd8cb9_91c7947f62ad458e8188c55687aabb6d~mv2_d_4912_3264_s_4_2.jpg"], spec: "A refreshing and protective lip balm made with pure beeswax.", description: "Protect and soothe your lips with our Mint & Beeswax Lip Balm. Pure, natural beeswax forms a protective barrier, while a hint of mint provides a refreshing tingle. Keeps lips hydrated and chap-free.", tags: ['affordable', 'high-demand'], stock: 70 },
+                { id: "C010", mainCat: "Cosmetics", category: "Hair Care", name: "Rittha & Shikakai Shampoo", price: 1400, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuaTWR814NxK7UT0OAplur84f8rqRa_FfkWw&s"], spec: "A natural, cleansing shampoo that's gentle on your scalp.", description: "Cleanse your hair naturally with the power of Rittha (Soapnut) and Shikakai. This traditional shampoo is free from harsh chemicals, gently cleanses the scalp, removes impurities, and adds natural shine and bounce to your hair.", tags: ['new-arrival'], stock: 33 },
+                { id: "C011", mainCat: "Cosmetics", category: "Skincare", name: "Sandalwood Soothing Gel", price: 1300, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3dyzvaamxoRQLjuniw7LUI4nYN1vMsKyoww&s"], spec: "A light, cooling gel perfect for calming irritated skin.", description: "Calm and cool your skin with this light Sandalwood Soothing Gel. Known for its anti-inflammatory and cooling properties, sandalwood helps to reduce redness and irritation, making it perfect for sensitive or sun-exposed skin.", tags: ['featured'], stock: 18 },
+            ],
+            cart: [], wishlist: [], orders: [],
+        };
+        const state = { 
+            activeCategory: null,
+            activeProduct: null,
+            isLoggedIn: false,
+            customerName: 'Guest',
+            selectedPaymentMethod: 'cod',
+            deliveryCharge: 0, 
+            orderCounter: 1
+        };
+
+        // ===================================================================================
+        // II. DOM ELEMENT SELECTORS & HELPERS
+        // ===================================================================================
+        const getEl = (id) => document.getElementById(id);
+        const headerEl = document.querySelector('header');
+        const mainEl = document.querySelector('main');
+        const modalContainer = getEl('modal-container');
+        const sidebarContainer = getEl('sidebar-container');
+        const toastContainer = getEl('toast-container');
+        const shopContent = getEl('shop-content');
+        const categoryChoice = getEl('category-choice');
+        
+        // ===================================================================================
+        // III. RENDER & UI FUNCTIONS
+        // ===================================================================================
+        const showToast = (message, type = 'success') => {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : type === 'info' ? 'bg-blue-500' : 'bg-red-500';
+            toast.className = `pop-in ${bgColor} text-white text-sm font-semibold py-2 px-4 rounded-full shadow-lg`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'popIn 0.5s reverse forwards';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        };
+        
+        const renderHeader = () => {
+             const loginButtonHTML = state.isLoggedIn
+                 ? `<div class="flex items-center gap-2">
+                     <img src="https://placehold.co/32x32/8A2BE2/FFFFFF?text=${state.customerName.charAt(0).toUpperCase()}" alt="User" class="w-8 h-8 rounded-full border-2 border-violet-200">
+                     <span class="font-semibold text-gray-700 hidden sm:block">${state.customerName}</span>
+                     <button id="logout-btn" class="text-sm font-medium text-gray-600 hover:text-violet-600 ml-2">Logout</button>
+                   </div>`
+                 : `<button id="login-btn" class="bg-violet-600 text-white px-4 py-2 rounded-md font-semibold text-sm hover:bg-violet-700 transition-all duration-300">Login</button>`;
+
+             headerEl.innerHTML = `
+                 <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+                     <a href="#" id="brand-logo" class="font-display text-3xl text-violet-800">Kalakar</a>
+                     <div class="flex-1 max-w-xl mx-4">
+                        <form id="search-form" class="relative">
+                            <input type="search" id="search-input" placeholder="Search for products..." class="w-full p-2 pl-10 border border-gray-300 rounded-full focus:ring-2 focus:ring-violet-300 focus:border-violet-300 transition-all">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                        </form>
+                     </div>
+                     <div class="hidden md:flex items-center space-x-6">
+                         <button id="wishlist-btn" class="relative flex items-center gap-2 text-gray-600 hover:text-violet-600">
+                             <i data-lucide="heart" class="w-6 h-6"></i>
+                             <span id="wishlist-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">${db.wishlist.length}</span>
+                         </button>
+                         <button id="cart-btn" class="relative flex items-center gap-2 text-gray-600 hover:text-violet-600">
+                            <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                            <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">${db.cart.reduce((sum, item) => sum + item.quantity, 0)}</span>
+                         </button>
+                     </div>
+                     <div class="flex items-center gap-4 ml-4">
+                         ${loginButtonHTML}
+                         <div class="md:hidden flex items-center">
+                             <button id="mobile-cart-btn" class="relative text-gray-600 p-2"><i data-lucide="shopping-cart"></i><span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${db.cart.reduce((sum, item) => sum + item.quantity, 0)}</span></button>
+                             <button id="mobile-wishlist-btn" class="relative text-gray-600 p-2"><i data-lucide="heart"></i><span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${db.wishlist.length}</span></button>
+                         </div>
+                     </div>
+                 </div>`;
+        };
+
+        const renderShopLayout = (title = null, filterFn = null) => {
+            const pageTitle = title ? title : `Discover our ${state.activeCategory}`;
+            const productsToRender = filterFn ? db.products.filter(filterFn) : db.products.filter(p => p.mainCat === state.activeCategory);
+
+            const productsHTML = productsToRender.map(p => createProductCard(p)).join('');
+            const backButtonHTML = state.activeCategory
+                ? `<button id="back-to-categories" class="flex items-center gap-2 text-violet-600 font-semibold hover:text-violet-800">
+                     <i data-lucide="arrow-left"></i> Back to Categories
+                   </button>`
+                : `<div class="w-48"></div>`; 
+
+            shopContent.innerHTML = `
+                <div class="container mx-auto px-4 py-12">
+                    <div class="flex justify-between items-center mb-12">
+                        ${backButtonHTML}
+                        <h1 class="font-display text-4xl md:text-5xl text-violet-900 text-center">
+                            ${pageTitle}
+                        </h1>
+                        <div class="w-48 text-right"></div>
+                    </div>
+                    <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        ${productsHTML || `<p class="col-span-full text-center text-gray-500">No products found.</p>`}
+                    </div>
+                </div>`;
+            renderFooter();
+        };
+
+        const createProductCard = (product) => {
+            const isWished = db.wishlist.includes(product.id);
+            const premiumTag = product.tags.includes('premium') ? `<div class="tag premium">Premium</div>` : '';
+            const saleTag = !premiumTag && product.tags.includes('festive-sale') ? `<div class="tag bg-red-500 text-white">Sale</div>` : '';
+            const newTag = !premiumTag && !saleTag && product.tags.includes('new-arrival') ? `<div class="tag bg-blue-500 text-white">New</div>` : '';
+            const stockTag = product.stock === 0 ? `<div class="tag bg-gray-600 text-white">Sold Out</div>` : (!premiumTag && !saleTag && !newTag && product.stock < 10 ? `<div class="tag bg-yellow-500 text-black">Low Stock</div>` : '');
+
+            const cartButtonHTML = product.stock > 0
+                ? `<button data-id="${product.id}" class="add-to-cart-btn flex-grow bg-violet-600 text-white text-sm font-semibold py-2 px-3 rounded-lg hover:bg-violet-700 transition-colors">Add to Cart</button>`
+                : `<button class="flex-grow bg-gray-300 text-gray-500 text-sm font-semibold py-2 px-3 rounded-lg cursor-not-allowed">Sold Out</button>`;
+            
+            const wishlistButtonHTML = `<button data-id="${product.id}" title="Add to Wishlist" class="wishlist-toggle-btn-card p-2 border-2 border-gray-300 rounded-lg hover:border-red-400 transition-colors ${isWished ? 'active' : ''}"><i data-lucide="heart" class="w-5 h-5 pointer-events-none"></i></button>`;
+
+            return `
+                <div class="product-card bg-white/80 backdrop-blur-sm group flex flex-col slide-in-up">
+                    <div class="relative">
+                        <div class="description-tooltip">${product.spec}</div>
+                        ${premiumTag || saleTag || newTag || stockTag}
+                        <a href="#" class="product-link" data-id="${product.id}">
+                          <img src="${product.images[0]}" alt="${product.name}" class="w-full h-64 object-cover rounded-t-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';">
+                        </a>
+                        <div class="actions-overlay absolute inset-0 bg-black/40 flex items-center justify-center p-4 space-x-2 rounded-t-lg">
+                            <button class="action-button quick-view-btn" data-id="${product.id}" style="transition-delay: 0.1s;" title="Quick View"><i data-lucide="eye" class="w-8 h-8 p-1.5 bg-white/80 rounded-full text-gray-800 pointer-events-none"></i></button>
+                            ${product.stock > 0 ? `<button class="action-button add-to-cart-btn" data-id="${product.id}" style="transition-delay: 0.2s;" title="Add to Cart"><i data-lucide="shopping-cart" class="w-8 h-8 p-1.5 bg-white/80 rounded-full text-gray-800 pointer-events-none"></i></button>` : ''}
+                            <button class="action-button wishlist-toggle-btn ${isWished ? 'active' : ''}" data-id="${product.id}" style="transition-delay: 0.3s;" title="Add to Wishlist"><i data-lucide="heart" class="w-8 h-8 p-1.5 bg-white/80 rounded-full pointer-events-none"></i></button>
+                        </div>
+                    </div>
+                    <div class="p-4 flex-grow flex flex-col"> 
+                        <h3 class="font-semibold truncate"><a href="#" class="product-link hover:text-violet-700" data-id="${product.id}">${product.name}</a></h3>
+                        <p class="text-violet-700 font-bold">${'NPR ' + product.price.toLocaleString()}</p>
+                        <div class="mt-auto pt-4 flex items-center gap-2">
+                            ${cartButtonHTML}
+                            ${wishlistButtonHTML}
+                        </div>
+                    </div>
+                </div>`;
+        };
+        
+        const renderFooter = () => {
+            const footer = document.createElement('footer');
+            footer.className = "bg-violet-900/95 text-white p-10 mt-16";
+            footer.innerHTML = `
+                <div class="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
+                    <div>
+                        <h3 class="font-display text-2xl mb-2">Kalakar</h3>
+                        <p class="text-violet-200 text-sm">Authentic crafts from the heart of Kathmandu.</p>
+                        <div class="mt-4 text-violet-200 text-sm space-y-1">
+                            <p><i data-lucide="phone" class="inline w-4 h-4 mr-2"></i> Helpdesk: +977-9800000000</p>
+                            <p><i data-lucide="message-circle" class="inline w-4 h-4 mr-2"></i> WhatsApp: +977-9811111111</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold uppercase tracking-wider mb-3">Shop</h4>
+                        <a href="#" class="block text-sm hover:text-violet-200 mb-2 category-link" data-category="Jewelry">Jewelry</a>
+                        <a href="#" class="block text-sm hover:text-violet-200 mb-2 category-link" data-category="Cosmetics">Cosmetics</a>
+                        <a href="#" id="track-order-link" class="block text-sm hover:text-violet-200 mb-2">Track My Order</a>
+                    </div>
+                    <div>
+                        <h4 class="font-bold uppercase tracking-wider mb-3">About</h4>
+                        <a href="#" id="our-story-link" class="block text-sm hover:text-violet-200 mb-2">Our Story</a>
+                        <a href="#" class="block text-sm hover:text-violet-200 mb-2">Artisans</a>
+                        <a href="#" class="block text-sm hover:text-violet-200 mb-2">Contact Us</a>
+                    </div>
+                    <div>
+                         <h4 class="font-bold uppercase tracking-wider mb-3">Follow Us</h4>
+                         <div class="flex justify-center md:justify-start space-x-4">
+                             <a href="#" class="hover:text-violet-200"><i data-lucide="instagram"></i></a>
+                             <a href="#" class="hover:text-violet-200"><i data-lucide="facebook"></i></a>
+                             <a href="#" class="hover:text-violet-200"><i data-lucide="twitter"></i></a>
+                             <a href="#" class="hover:text-violet-200"><i data-lucide="youtube"></i></a>
+                             <a href="#" class="hover:text-violet-200"><i data-lucide="linkedin"></i></a>
+                         </div>
+                    </div>
+                </div>
+                <div class="text-center text-violet-300 text-xs mt-10 border-t border-violet-700 pt-6">
+                     &copy; ${new Date().getFullYear()} Kalakar Nepal. All Rights Reserved. Swayambhu, Kathmandu, Nepal.
+                </div>
+            `;
+            const existingFooter = shopContent.querySelector('footer');
+            if (existingFooter) {
+                existingFooter.remove();
+            }
+            shopContent.appendChild(footer);
+        };
+
+        const renderModal = (content, maxWidth = 'max-w-md') => {
+            modalContainer.innerHTML = `<div class="modal-backdrop fixed inset-0 flex p-4"><div class="bg-white rounded-lg shadow-xl w-full ${maxWidth} m-auto relative pop-in">${content}</div></div>`;
+            modalContainer.style.display = "flex";
+            modalContainer.classList.remove('pointer-events-none');
+            lucide.createIcons();
+        };
+
+        const closeModal = () => {
+            modalContainer.innerHTML = "";
+            modalContainer.style.display = "none";
+            modalContainer.classList.add('pointer-events-none');
+        };
+
+        const renderSidebar = (content) => {
+            sidebarContainer.innerHTML = `<div class="fixed inset-0 bg-black/30 close-sidebar-btn"></div>${content}`;
+            sidebarContainer.classList.remove('pointer-events-none');
+            setTimeout(() => sidebarContainer.querySelector('.sidebar').classList.add('open'), 10);
+            lucide.createIcons();
+        };
+
+        const closeSidebar = () => {
+            const sidebar = sidebarContainer.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.remove('open');
+                setTimeout(() => {
+                    sidebarContainer.innerHTML = "";
+                    sidebarContainer.classList.add('pointer-events-none');
+                }, 400);
+            }
+        };
+
+        const renderCartSidebar = () => {
+            let itemsHTML = `<div class="text-center my-8">
+                                <p class="text-gray-500 mb-4">Your cart is empty.</p>
+                                <button class="go-shopping-btn bg-violet-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-violet-700">Go Shopping</button>
+                             </div>`;
+            let subtotal = 0;
+            if(db.cart.length > 0) {
+                 itemsHTML = db.cart.map(item => {
+                     const product = db.products.find(p => p.id === item.id);
+                     subtotal += product.price * item.quantity;
+                     return `
+                         <div class="flex items-center justify-between mb-4">
+                             <img src="${product.images[0]}" class="w-16 h-16 rounded-md mr-4" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';">
+                             <div class="flex-grow">
+                                 <h4 class="font-semibold text-sm">${product.name}</h4>
+                                 <p class="text-xs text-gray-500">NPR ${product.price.toLocaleString()}</p>
+                                 <div class="flex items-center border rounded-md w-fit mt-1">
+                                      <button class="qty-change p-1" data-id="${item.id}" data-change="-1">-</button>
+                                      <input type="number" value="${item.quantity}" class="w-8 text-center text-sm" readonly>
+                                      <button class="qty-change p-1" data-id="${item.id}" data-change="1">+</button>
+                                 </div>
+                             </div>
+                             <button class="remove-from-cart text-red-500 hover:text-red-700" data-id="${item.id}"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                         </div>`;
+                 }).join('');
+            }
+            const content = `
+                <div class="sidebar w-full max-w-sm bg-white shadow-2xl flex flex-col">
+                    <div class="flex justify-between items-center p-6 border-b"><h2 class="text-2xl font-display flex items-center gap-2"><i data-lucide="shopping-bag"></i> Your Cart</h2><button class="close-sidebar-btn"><i data-lucide="x"></i></button></div>
+                    <div class="flex-grow p-6 overflow-y-auto">${itemsHTML}</div>
+                    <div class="p-6 border-t bg-gray-50">
+                        <div class="flex justify-between font-bold text-lg mb-4"><span>Subtotal</span><span>NPR ${subtotal.toLocaleString()}</span></div>
+                        <button id="checkout-btn" class="w-full bg-violet-600 text-white py-3 rounded-lg font-semibold hover:bg-violet-700 transition-colors mb-2 disabled:bg-gray-300 disabled:cursor-not-allowed" ${db.cart.length === 0 ? 'disabled' : ''}>Proceed to Checkout</button>
+                        <button class="close-sidebar-btn w-full text-violet-600 font-semibold py-2 rounded-lg hover:bg-violet-100 transition-colors">Continue Shopping</button>
+                    </div>
+                </div>`;
+            renderSidebar(content);
+        };
+        
+        const renderWishlistSidebar = () => {
+            let itemsHTML = `<div class="text-center my-8">
+                                <p class="text-gray-500 mb-4">Your wishlist is empty.</p>
+                                <button class="go-shopping-btn bg-violet-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-violet-700">Go Shopping</button>
+                             </div>`;
+            if(db.wishlist.length > 0) {
+                 itemsHTML = db.wishlist.map(id => {
+                     const product = db.products.find(p => p.id === id);
+                     return `
+                         <div class="flex items-center justify-between mb-4">
+                             <img src="${product.images[0]}" class="w-16 h-16 rounded-md mr-4" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';">
+                             <div class="flex-grow">
+                                 <h4 class="font-semibold text-sm">${product.name}</h4>
+                                 <p class="text-xs text-gray-500">NPR ${product.price.toLocaleString()}</p>
+                             </div>
+                             <button class="add-to-cart-btn text-violet-600 hover:text-violet-800" data-id="${product.id}" title="Move to Cart"><i data-lucide="shopping-cart" class="w-5 h-5"></i></button>
+                         </div>`;
+                 }).join('');
+            }
+            const content = `
+                <div class="sidebar w-full max-w-sm bg-white shadow-2xl flex flex-col">
+                    <div class="flex justify-between items-center p-6 border-b"><h2 class="text-2xl font-display flex items-center gap-2"><i data-lucide="heart"></i> Your Wishlist</h2><button class="close-sidebar-btn"><i data-lucide="x"></i></button></div>
+                    <div class="flex-grow p-6 overflow-y-auto">${itemsHTML}</div>
+                    <div class="p-6 border-t bg-gray-50">
+                        <button class="close-sidebar-btn w-full text-violet-600 font-semibold py-3 rounded-lg hover:bg-violet-100 transition-colors">Continue Shopping</button>
+                    </div>
+                </div>`;
+            renderSidebar(content);
+        };
+
+        const renderLoginModal = () => {
+            const content = `
+                <div class="p-8 text-center">
+                    <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                    <h2 class="font-display text-3xl mb-2">Welcome Back</h2>
+                    <p class="text-gray-600 mb-6">Log in to continue.</p>
+                    <form id="login-form" class="text-left">
+                        <input type="email" placeholder="Email Address" class="w-full p-2 border rounded mb-4" required>
+                        <input type="password" placeholder="Password" class="w-full p-2 border rounded mb-4" required>
+                        <button type="submit" class="w-full bg-violet-600 text-white py-3 rounded-lg font-semibold hover:bg-violet-700">Login</button>
+                    </form>
+                    <p class="text-sm text-gray-600 mt-4">
+                        Don't have an account? <a href="#" id="signup-link" class="font-semibold text-violet-600 hover:underline">Register here</a>
+                    </p>
+                </div>`;
+            renderModal(content);
+        };
+
+        const renderSignupModal = () => {
+            const content = `
+                <div class="p-8 text-center">
+                    <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                    <h2 class="font-display text-3xl mb-2">Create Account</h2>
+                    <p class="text-gray-600 mb-6">Join the Kalakar family.</p>
+                    <form id="signup-form" class="text-left">
+                        <input type="text" placeholder="Full Name" class="w-full p-2 border rounded mb-4" required>
+                        <input type="email" placeholder="Email Address" class="w-full p-2 border rounded mb-4" required>
+                        <input type="password" placeholder="Password" class="w-full p-2 border rounded mb-4" required>
+                        <button type="submit" class="w-full bg-violet-600 text-white py-3 rounded-lg font-semibold hover:bg-violet-700">Register</button>
+                    </form>
+                     <p class="text-sm text-gray-600 mt-4">
+                         Already have an account? <a href="#" id="login-link" class="font-semibold text-violet-600 hover:underline">Login here</a>
+                    </p>
+                </div>`;
+                 renderModal(content);
+        }
+
+        const renderCheckoutModal = () => {
+            let subtotal = 0;
+            const itemsSummary = db.cart.map(item => {
+                const product = db.products.find(p => p.id === item.id);
+                subtotal += product.price * item.quantity;
+                return `<li class="flex justify-between text-sm py-1"><span class="text-gray-600">${item.quantity} x ${product.name}</span><span class="font-medium">NPR ${(item.quantity * product.price).toLocaleString()}</span></li>`;
+            }).join('');
+            
+            state.deliveryCharge = 0; // Reset on modal render
+
+            const content = `
+                <div class="p-8">
+                    <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                    <h2 class="font-display text-3xl mb-6">Checkout</h2>
+                    <form id="confirm-order-form">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                            <div>
+                                <h3 class="font-semibold mb-4 text-lg">1. Shipping Details</h3>
+                                <div class="space-y-4">
+                                    <input type="text" id="customer-name" placeholder="Full Name" class="block w-full border border-gray-300 rounded-md shadow-sm p-2" required value="${state.customerName !== 'Guest' ? state.customerName : ''}">
+                                    <input type="text" id="customer-address" placeholder="Address" class="block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
+                                    <input type="tel" id="customer-phone" placeholder="Phone Number" class="block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
+                                </div>
+                                <h3 class="font-semibold mt-6 mb-2 text-lg">2. Delivery Method</h3>
+                                <div id="delivery-options-container" class="space-y-2">
+                                    <div class="delivery-option p-3 rounded-lg flex items-center gap-4" data-delivery-cost="120">
+                                        <i data-lucide="truck" class="w-8 h-8 text-gray-600"></i>
+                                        <div><h4 class="font-bold">Inside Valley Delivery</h4><p class="text-xs text-gray-500">NPR 120 (1-2 days)</p></div>
+                                    </div>
+                                    <div class="delivery-option p-3 rounded-lg flex items-center gap-4" data-delivery-cost="220">
+                                        <i data-lucide="navigation" class="w-8 h-8 text-gray-600"></i>
+                                        <div><h4 class="font-bold">Outside Valley Delivery</h4><p class="text-xs text-gray-500">NPR 220 (2-4 days)</p></div>
+                                    </div>
+                                    <div class="delivery-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
+                                        <i data-lucide="globe" class="w-8 h-8 text-gray-600"></i>
+                                        <div><h4 class="font-bold">International Shipping</h4><p class="text-xs text-red-500">Available soon</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-4 text-lg">3. Order Summary</h3>
+                                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                    <ul class="divide-y">${itemsSummary}</ul>
+                                    <div class="flex justify-between text-sm py-1 border-t mt-2 pt-2"><span class="text-gray-600">Subtotal</span><span class="font-medium">NPR ${subtotal.toLocaleString()}</span></div>
+                                    <div class="flex justify-between text-sm py-1"><span class="text-gray-600">Delivery Fee</span><span id="delivery-fee" class="font-medium">--</span></div>
+                                    <div class="flex justify-between font-bold text-lg pt-2 mt-2 border-t"><span>Total</span><span id="total-amount">--</span></div>
+                                </div>
+                                <h3 class="font-semibold mb-2 text-lg">4. Payment Method</h3>
+                                <div class="space-y-2">
+                                    <div class="payment-option p-3 rounded-lg flex items-center gap-4 selected" data-method="cod">
+                                        <i data-lucide="hand-coins" class="w-8 h-8 text-gray-600"></i>
+                                        <div><h4 class="font-bold">Cash on Delivery</h4><p class="text-xs text-gray-500">Pay when your order arrives.</p></div>
+                                    </div>
+                                    <div class="payment-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Esewa_logo.webp/1200px-Esewa_logo.webp.png" alt="eSewa" class="h-8">
+                                        <div><h4 class="font-bold">eSewa</h4><p class="text-xs text-red-500">Available soon</p></div>
+                                    </div>
+                                    <div class="payment-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
+                                        <img src="https://images.seeklogo.com/logo-png/33/1/khalti-logo-png_seeklogo-337962.png" alt="Khalti" class="h-8">
+                                        <div><h4 class="font-bold">Khalti</h4><p class="text-xs text-red-500">Available soon</p></div>
+                                    </div>
+                                    <div class="payment-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
+                                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAq-YwrsBtGhl1N7rWNioVH5py-aT_n8kZIg&s" alt="Fonepay" class="h-8">
+                                        <div><h4 class="font-bold">Fonepay</h4><p class="text-xs text-red-500">Available soon</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-8 flex items-center justify-end">
+                            <button id="confirm-order-btn" type="submit" class="bg-violet-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-violet-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Confirm Order</button>
+                        </div>
+                    </form>
+                </div>`;
+            renderModal(content, 'max-w-4xl');
+        };
+        
+        const renderQuickViewModal = (product) => {
+             const content = `
+                <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                <div class="flex flex-col md:flex-row">
+                    <div class="w-full md:w-1/2 p-4"><img src="${product.images[0]}" alt="${product.name}" class="w-full h-full object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';"></div>
+                    <div class="w-full md:w-1/2 p-8 flex flex-col text-center md:text-left">
+                        <h2 class="font-display text-3xl mb-2">${product.name}</h2>
+                        <p class="text-2xl text-violet-700 font-bold mb-4">NPR ${product.price.toLocaleString()}</p>
+                        <p class="text-gray-600 mb-6">${product.spec}</p>
+                        <div class="mt-auto flex flex-col items-center gap-4 w-full">
+                            <button class="view-full-details-btn w-full bg-violet-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-violet-700 transition-colors" data-id="${product.id}">
+                                View Full Details
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            renderModal(content, 'max-w-4xl');
+        };
+
+        const renderProductDetailPage = (productId) => {
+            const product = db.products.find(p => p.id === productId);
+            if (!product) return;
+            state.activeProduct = productId;
+
+            const relatedProducts = db.products.filter(p => p.mainCat === product.mainCat && p.id !== product.id).slice(0, 4);
+            const relatedProductsHTML = relatedProducts.map(p => createProductCard(p)).join('');
+
+            shopContent.innerHTML = `
+            <div class="container mx-auto px-4 py-12 slide-in-up">
+                <button id="back-to-shop" class="flex items-center gap-2 text-violet-600 font-semibold hover:text-violet-800 mb-8">
+                    <i data-lucide="arrow-left"></i> Back to Shop
+                </button>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div><img src="${product.images[0]}" alt="${product.name}" class="w-full rounded-lg shadow-lg"></div>
+                    <div>
+                        <h1 class="font-display text-4xl mb-2">${product.name}</h1>
+                        <p class="text-3xl text-violet-700 font-bold mb-4">NPR ${product.price.toLocaleString()}</p>
+                        <p class="text-gray-600 mb-6">${product.description}</p>
+                        <p><strong>Availability:</strong> <span class="font-semibold ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}">${product.stock > 0 ? 'In Stock' : 'Sold Out'}</span></p>
+                        <div class="mt-8 flex items-center gap-4">
+                            <button class="add-to-cart-btn flex-grow bg-violet-600 text-white py-3 px-8 rounded-lg font-semibold text-lg hover:bg-violet-700 transition-colors" data-id="${product.id}" ${product.stock === 0 ? 'disabled' : ''}>
+                                <i data-lucide="shopping-cart" class="inline-block mr-2"></i> Add to Cart
+                            </button>
+                             <button title="Add to Wishlist" data-id="${product.id}" class="wishlist-toggle-btn p-3 border-2 rounded-lg hover:border-red-400 ${db.wishlist.includes(product.id) ? 'active' : ''}"><i data-lucide="heart" class="w-6 h-6 pointer-events-none"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-16 border-t pt-8">
+                    <h2 class="font-display text-3xl mb-8">You Might Also Like</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">${relatedProductsHTML}</div>
+                </div>
+            </div>`;
+            renderFooter();
+            lucide.createIcons();
+        };
+        
+        const renderOurStoryModal = () => {
+             const content = `
+                <div class="p-8 text-left">
+                    <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                    <h2 class="font-display text-3xl mb-4 text-center">Our Story</h2>
+                    <div class="text-gray-600 space-y-4">
+                        <p>Kalakar was born from a dream—a dream held by our founder, <strong>Kunal Gupta</strong>, to bring the soul of Nepali craftsmanship to the world. Raised amidst the vibrant artistry of Kathmandu, Kunal developed a deep appreciation for the intricate skills passed down through generations. However, he also saw the severe challenges artisans faced, from economic instability to a lack of global recognition.</p>
+                        <p>Despite facing his own set of hardships in a country grappling with change, Kunal was determined. He started Kalakar not just as a business, but as a movement. His vision was to create a sustainable platform that empowers local artisans, preserves our rich cultural heritage, and offers authentic, handcrafted treasures to you.</p>
+                    </div>
+                     <div class="mt-6 text-center">
+                        <button class="close-modal-btn text-sm text-violet-600 hover:underline">Return to Homepage</button>
+                    </div>
+                </div>`;
+            renderModal(content, 'max-w-2xl');
+        };
+
+        const renderTrackOrderModal = () => {
+            const content = `
+                <div class="p-8 text-center">
+                    <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                    <h2 class="font-display text-3xl mb-2">Track Your Order</h2>
+                    <p class="text-gray-600 mb-6">Enter your Order ID to see its status.</p>
+                    <form id="track-order-form" class="flex gap-2">
+                        <input type="text" id="track-order-id" placeholder="e.g., KAL1" class="w-full p-2 border rounded" required>
+                        <button type="submit" class="bg-violet-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-violet-700">Track</button>
+                    </form>
+                    <div id="order-status-result" class="mt-6 text-left"></div>
+                </div>
+            `;
+            renderModal(content);
+        };
+
+        // ===================================================================================
+        // IV. CORE LOGIC & ACTIONS
+        // ===================================================================================
+        const saveStateToLocalStorage = () => {
+            const appState = {
+                cart: db.cart,
+                wishlist: db.wishlist,
+                orders: db.orders,
+                orderCounter: state.orderCounter,
+                isLoggedIn: state.isLoggedIn,
+                customerName: state.customerName
+            };
+            localStorage.setItem('kalakarState', JSON.stringify(appState));
+        };
+
+        const loadStateFromLocalStorage = () => {
+            const savedState = localStorage.getItem('kalakarState');
+            if (savedState) {
+                const parsedState = JSON.parse(savedState);
+                db.cart = parsedState.cart || [];
+                db.wishlist = parsedState.wishlist || [];
+                db.orders = parsedState.orders || [];
+                state.orderCounter = parsedState.orderCounter || 1;
+                state.isLoggedIn = parsedState.isLoggedIn || false;
+                state.customerName = parsedState.customerName || 'Guest';
+            }
+        };
+        
+        const updateCart = () => {
+            const cartCount = db.cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.querySelectorAll('#cart-count, #mobile-cart-btn span').forEach(el => el.textContent = cartCount);
+            if(sidebarContainer.querySelector('.sidebar')) renderCartSidebar();
+            saveStateToLocalStorage();
+        };
+
+        const updateWishlist = () => {
+            document.querySelectorAll('#wishlist-count, #mobile-wishlist-btn span').forEach(el => el.textContent = db.wishlist.length);
+            document.querySelectorAll('.wishlist-toggle-btn, .wishlist-toggle-btn-card').forEach(btn => {
+                const isWished = db.wishlist.includes(btn.dataset.id);
+                btn.classList.toggle('active', isWished);
+            });
+            if(sidebarContainer.querySelector('.sidebar')?.querySelector('h2')?.textContent.includes('Wishlist')) {
+                renderWishlistSidebar();
+            }
+            saveStateToLocalStorage();
+        };
+
+        const handleAddToCart = (productId, quantity = 1) => {
+            const product = db.products.find(p => p.id === productId);
+            if (product.stock === 0) {
+                showToast('Sorry, this item is sold out.', 'error'); return;
+            }
+            const existingItem = db.cart.find(i => i.id === productId);
+            if (existingItem) {
+                existingItem.quantity = Math.min(product.stock, existingItem.quantity + quantity);
+            } else {
+                db.cart.push({ id: productId, quantity: quantity });
+            }
+            if (db.wishlist.includes(productId)) {
+                handleToggleWishlist(productId, false);
+            }
+            showToast(`${product.name} added to cart!`, 'success');
+            updateCart();
+            updateWishlist();
+        };
+
+        const handleQtyChange = (productId, change) => {
+            const item = db.cart.find(i => i.id === productId);
+            if (item) {
+                const product = db.products.find(p => p.id === productId);
+                item.quantity += change;
+                if (item.quantity > product.stock) {
+                    item.quantity = product.stock;
+                    showToast('Cannot add more than available stock.', 'info');
+                }
+                if (item.quantity <= 0) {
+                    db.cart = db.cart.filter(i => i.id !== productId);
+                }
+                updateCart();
+            }
+        };
+
+        const handleRemoveFromCart = (productId) => {
+            db.cart = db.cart.filter(i => i.id !== productId);
+            showToast('Item removed from cart', 'info');
+            updateCart();
+        };
+        
+        const handleToggleWishlist = (productId, showMsg = true) => {
+            if (db.wishlist.includes(productId)) {
+                db.wishlist = db.wishlist.filter(id => id !== productId);
+                if (showMsg) showToast('Removed from wishlist', 'info');
+            } else {
+                db.wishlist.push(productId);
+                if (showMsg) showToast('Added to wishlist!', 'success');
+            }
+            updateWishlist();
+        };
+
+        const updateCheckoutTotals = () => {
+            const deliveryFeeEl = getEl('delivery-fee');
+            const totalAmountEl = getEl('total-amount');
+            const confirmBtn = getEl('confirm-order-btn');
+
+            if (state.deliveryCharge > 0) {
+                let subtotal = 0;
+                db.cart.forEach(item => {
+                    const product = db.products.find(p => p.id === item.id);
+                    subtotal += product.price * item.quantity;
+                });
+                const total = subtotal + state.deliveryCharge;
+                deliveryFeeEl.textContent = `NPR ${state.deliveryCharge.toLocaleString()}`;
+                totalAmountEl.textContent = `NPR ${total.toLocaleString()}`;
+                confirmBtn.disabled = false;
+            } else {
+                deliveryFeeEl.textContent = '--';
+                totalAmountEl.textContent = '--';
+                confirmBtn.disabled = true;
+            }
+        };
+        
+        // ===================================================================================
+        // V. EVENT LISTENERS
+        // ===================================================================================
+        const setupEventListeners = () => {
+            document.body.addEventListener('click', (e) => {
+                const target = e.target.closest('button, a, div.category-choice-card, div.delivery-option');
+                if (!target) return;
+                
+                const id = target.id;
+                const classList = target.classList;
+                const dataId = target.dataset.id;
+                
+                // --- Category & Page Navigation ---
+                if (classList.contains('category-choice-card') || classList.contains('category-link')) {
+                    e.preventDefault();
+                    state.activeCategory = target.dataset.category;
+                    state.activeProduct = null;
+                    document.body.classList.remove('default-bg', 'jewelry-bg', 'cosmetics-bg');
+                    document.body.classList.add(state.activeCategory === 'Jewelry' ? 'jewelry-bg' : 'cosmetics-bg');
+                    categoryChoice.classList.add('hidden');
+                    shopContent.classList.remove('hidden');
+                    renderShopLayout();
+                } else if (id === 'brand-logo' || id === 'back-to-categories' || classList.contains('go-shopping-btn')) {
+                    e.preventDefault();
+                    state.activeCategory = null;
+                    state.activeProduct = null;
+                    document.body.classList.remove('jewelry-bg', 'cosmetics-bg');
+                    document.body.classList.add('default-bg');
+                    shopContent.classList.add('hidden');
+                    shopContent.innerHTML = '';
+                    categoryChoice.classList.remove('hidden');
+                    closeSidebar();
+                    window.scrollTo(0,0);
+                } else if (id === 'back-to-shop') {
+                    e.preventDefault();
+                    state.activeProduct = null;
+                    renderShopLayout(null, p => p.mainCat === state.activeCategory);
+                    window.scrollTo(0,0);
+                } else if (classList.contains('product-link')) {
+                    e.preventDefault();
+                    renderProductDetailPage(dataId);
+                    window.scrollTo(0, 0);
+                }
+                
+                // --- Sidebar and Modal Controls ---
+                else if (id === 'cart-btn' || id === 'mobile-cart-btn') { e.preventDefault(); renderCartSidebar(); }
+                else if (id === 'wishlist-btn' || id === 'mobile-wishlist-btn') { e.preventDefault(); renderWishlistSidebar(); }
+                else if (id === 'login-btn') { e.preventDefault(); renderLoginModal(); }
+                else if (id === 'signup-link') { e.preventDefault(); renderSignupModal(); }
+                else if (id === 'login-link') { e.preventDefault(); renderLoginModal(); }
+                else if (id === 'our-story-link') { e.preventDefault(); renderOurStoryModal(); }
+                else if (id === 'track-order-link') { e.preventDefault(); renderTrackOrderModal(); }
+                else if (id === 'logout-btn') {
+                    e.preventDefault();
+                    state.isLoggedIn = false;
+                    state.customerName = 'Guest';
+                    saveStateToLocalStorage();
+                    renderHeader(); showToast('You have been logged out.', 'info');
+                }
+                else if (classList.contains('close-sidebar-btn')) { e.preventDefault(); closeSidebar(); }
+                else if (classList.contains('close-modal-btn')) { e.preventDefault(); closeModal(); }
+                else if (id === 'checkout-btn') { 
+                    e.preventDefault();
+                    closeSidebar(); 
+                    renderCheckoutModal(); 
+                }
+                
+                // --- Product Actions ---
+                else if (classList.contains('add-to-cart-btn')) { e.preventDefault(); handleAddToCart(dataId); }
+                else if (classList.contains('wishlist-toggle-btn') || classList.contains('wishlist-toggle-btn-card')) {
+                    e.preventDefault(); handleToggleWishlist(dataId);
+                }
+                else if (classList.contains('quick-view-btn')) {
+                    e.preventDefault();
+                    const product = db.products.find(p => p.id === dataId);
+                    renderQuickViewModal(product);
+                }
+                else if(classList.contains('view-full-details-btn')) {
+                    e.preventDefault();
+                    closeModal();
+                    renderProductDetailPage(dataId);
+                    window.scrollTo(0, 0);
+                }
+                else if (classList.contains('remove-from-cart')) { e.preventDefault(); handleRemoveFromCart(dataId); }
+                else if (classList.contains('qty-change')) {
+                    e.preventDefault(); handleQtyChange(dataId, parseInt(target.dataset.change));
+                }
+
+                // --- Checkout Actions ---
+                else if (classList.contains('delivery-option')) {
+                    e.preventDefault();
+                    if (target.classList.contains('opacity-50')) return;
+                    state.deliveryCharge = parseInt(target.dataset.deliveryCost);
+                    document.querySelectorAll('.delivery-option').forEach(opt => opt.classList.remove('selected'));
+                    target.classList.add('selected');
+                    updateCheckoutTotals();
+                }
+
+                lucide.createIcons();
+            });
+
+            document.body.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (e.target.id === 'search-form') {
+                    const query = getEl('search-input').value.toLowerCase();
+                    if (!query) return;
+                    const results = db.products.filter(p => 
+                        p.name.toLowerCase().includes(query) || 
+                        p.description.toLowerCase().includes(query) ||
+                        p.tags.some(tag => tag.toLowerCase().includes(query))
+                    );
+                    categoryChoice.classList.add('hidden');
+                    shopContent.classList.remove('hidden');
+                    renderShopLayout(`Search Results for "${query}"`, () => results.includes.bind(results)());
+                }
+                else if (e.target.id === 'login-form' || e.target.id === 'signup-form') {
+                    const emailInput = e.target.querySelector('input[type="email"]');
+                    const nameInput = e.target.querySelector('input[type="text"]');
+                    state.isLoggedIn = true;
+                    state.customerName = nameInput ? nameInput.value.split(' ')[0] : emailInput.value.split('@')[0];
+                    closeModal();
+                    saveStateToLocalStorage();
+                    renderHeader();
+                    showToast(`Welcome, ${state.customerName}!`, 'success');
+                } else if (e.target.id === 'confirm-order-form') {
+                    const name = getEl('customer-name').value;
+                    const address = getEl('customer-address').value;
+                    const phone = getEl('customer-phone').value;
+                    if (!name || !address || !phone) {
+                        showToast('Please fill in all shipping details.', 'error'); return;
+                    }
+                    
+                    const orderId = `KAL${state.orderCounter++}`;
+                    db.orders.push({
+                        id: orderId,
+                        customerName: name,
+                        address: address,
+                        phone: phone,
+                        items: [...db.cart],
+                        status: 'Processing',
+                        date: new Date().toISOString()
+                    });
+
+                    db.cart = [];
+                    closeModal();
+                    updateCart();
+                    saveStateToLocalStorage();
+                    showToast(`Order Confirmed! Your Order ID is ${orderId}.`, 'success');
+                } else if (e.target.id === 'track-order-form') {
+                    const orderIdToTrack = getEl('track-order-id').value.toUpperCase();
+                    const order = db.orders.find(o => o.id === orderIdToTrack);
+                    const resultEl = getEl('order-status-result');
+                    if (order) {
+                        resultEl.innerHTML = `<p class="text-green-600 font-semibold">Order found! Status: <span class="bg-green-100 p-1 rounded">${order.status}</span></p>`;
+                    } else {
+                        resultEl.innerHTML = `<p class="text-red-500 font-semibold">Order ID not found. Please check the ID and try again.</p>`;
+                    }
+                }
+            });
+
+             window.addEventListener('scroll', () => {
+                 const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+                 const progress = (window.scrollY / totalHeight) * 100;
+                 const progressBar = getEl('scroll-progress-bar');
+                 if (progressBar) progressBar.style.height = `${progress}%`;
+                 
+                 if(window.scrollY > 50) { document.body.classList.add('scrolling'); } 
+                 else { document.body.classList.remove('scrolling'); }
+             });
+        };
+        
+        // ===================================================================================
+        // VI. INITIALIZATION
+        // ===================================================================================
+        function init() {
+            loadStateFromLocalStorage();
+            renderHeader();
+            categoryChoice.innerHTML = `
+                <h1 class="font-display text-4xl md:text-6xl text-violet-900 mb-4 slide-in-up">Namaste! Welcome to Kalakar</h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-12 slide-in-up" style="animation-delay: 0.2s;">Choose your journey into authentic Nepali craftsmanship.</p>
+                <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl pop-in">
+                    <div class="category-choice-card cursor-pointer group relative rounded-lg overflow-hidden shadow-lg" data-category="Jewelry">
+                      <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1887&q=80" class="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-110">
+                      <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><h2 class="font-display text-4xl text-white">Jewelry</h2></div>
+                    </div>
+                    <div class="category-choice-card cursor-pointer group relative rounded-lg overflow-hidden shadow-lg" data-category="Cosmetics">
+                      <img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&q=80&w=1887" class="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-110">
+                      <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><h2 class="font-display text-4xl text-white">Cosmetics</h2></div>
+                    </div>
+                </div>`;
+            setupEventListeners();
+            lucide.createIcons();
+            updateCart();
+            updateWishlist();
+        }
+
+        init();
+    });
+    </script>
+</body>
+</html>
