@@ -87,29 +87,6 @@
         .product-card .tag { position: absolute; top: 12px; left: 12px; padding: 4px 8px; font-size: 10px; font-weight: bold; text-transform: uppercase; border-radius: 4px; z-index: 2; }
         .tag.premium { background-color: #d97706; color: white; }
         
-        /* Description on hover */
-        .product-card .description-tooltip {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(10px);
-            background-color: #333;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, transform 0.3s;
-            z-index: 20;
-        }
-        .product-card:hover .description-tooltip {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
-        }
-
         /* --- Category Choice Section --- */
         .category-choice-card { transition: transform 0.3s, box-shadow 0.3s; }
         .category-choice-card:hover { transform: scale(1.05); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2); }
@@ -146,7 +123,7 @@
     <div id="app" class="relative max-w-screen-2xl mx-auto">
         <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-30 shadow-md border-b border-gray-200"></header>
         <main>
-            <section id="category-choice" class="min-h-screen flex flex-col items-center justify-center text-center p-6"></section>
+            <section id="category-choice"></section>
             <div id="shop-content" class="hidden"></div>
         </main>
         <div id="modal-container" class="fixed inset-0 z-50 pointer-events-none"></div>
@@ -272,6 +249,7 @@
         };
 
         const getFooterHTML = () => {
+            const tiktokIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tiktok"><path d="M12.52 15.04L8.5 13.51A2.5 2.5 0 0 1 11 9.04V8a3 3 0 0 0-3-3H6v11c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2v-3.04c.1-.02.2-.04.3-.06.2-.1.4-.2.6-.4l.8.8c.2.2.4.3.7.4.3.1.6 0 .9-.1l1-1.73c.3-.5.2-1.1-.2-1.4l-.8-.8c.1-.2.2-.4.4-.6.2-.2.4-.4.6-.6.3-.3.6-.6.8-1 .1-.3 0-.6-.1-.9l-1.73-1c-.5-.3-1.1-.2-1.4.2l-.8.8c-.2-.1-.4-.2-.6-.4-.2-.2-.4-.4-.6-.6-.3-.3-.6-.6-1-.8-.3-.1-.6 0-.9.1l-1.73 1c-.5.3-.6 1-.2 1.4l.8.8c.1.2.2.4.4.6.2.2.4.4.6.6l-2.02 1.53Z"/></svg>`;
             return `
                  <footer class="bg-violet-900/95 text-white p-10 mt-16">
                      <div class="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
@@ -293,16 +271,14 @@
                              <h4 class="font-bold uppercase tracking-wider mb-3">About</h4>
                              <a href="#" id="our-story-link" class="block text-sm hover:text-violet-200 mb-2">Our Story</a>
                              <a href="#" class="block text-sm hover:text-violet-200 mb-2">Artisans</a>
-                             <a href="#" class="block text-sm hover:text-violet-200 mb-2">Contact Us</a>
+                             <a href="#" id="contact-us-link" class="block text-sm hover:text-violet-200 mb-2">Contact Us</a>
                          </div>
                          <div>
                               <h4 class="font-bold uppercase tracking-wider mb-3">Follow Us</h4>
                               <div class="flex justify-center md:justify-start space-x-4">
-                                  <a href="#" class="hover:text-violet-200"><i data-lucide="instagram"></i></a>
-                                  <a href="#" class="hover:text-violet-200"><i data-lucide="facebook"></i></a>
-                                  <a href="#" class="hover:text-violet-200"><i data-lucide="twitter"></i></a>
-                                  <a href="#" class="hover:text-violet-200"><i data-lucide="youtube"></i></a>
-                                  <a href="#" class="hover:text-violet-200"><i data-lucide="linkedin"></i></a>
+                                  <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="hover:text-violet-200"><i data-lucide="instagram"></i></a>
+                                  <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="hover:text-violet-200"><i data-lucide="facebook"></i></a>
+                                  <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="hover:text-violet-200">${tiktokIconSVG}</a>
                               </div>
                          </div>
                      </div>
@@ -313,44 +289,44 @@
              `;
         };
         
-        const renderShopLayout = (pageTitleOverride = null, searchFilterFn = null) => {
-            const pageTitle = pageTitleOverride || `Discover our ${state.activeCategory}`;
+        const renderShopLayout = (category) => {
+            state.activeCategory = category;
+            state.activeProduct = null;
+            const productsForCategory = db.products.filter(p => p.mainCat === category);
+            resetFilters(productsForCategory);
             
-            const backButtonHTML = state.activeCategory || pageTitleOverride
-                ? `<button id="back-to-categories" class="flex items-center gap-2 text-violet-600 font-semibold hover:text-violet-800">
-                      <i data-lucide="arrow-left"></i> Back to Categories
-                   </button>`
-                : `<div class="w-48"></div>`;
-            
-            const mobileFilterButton = searchFilterFn ? '' : `
-                <div class="lg:hidden mb-6 text-center">
-                    <button id="mobile-filter-btn" class="bg-white border-2 border-violet-500 text-violet-600 font-semibold py-2 px-6 rounded-full inline-flex items-center gap-2 shadow-sm">
-                        <i data-lucide="filter"></i> Filters
-                    </button>
-                </div>
-            `;
+            document.body.className = `text-gray-800 ${category === 'Jewelry' ? 'jewelry-bg' : 'cosmetics-bg'}`;
+            categoryChoice.classList.add('hidden');
+            shopContent.classList.remove('hidden');
+
+            const pageTitle = `Discover our ${category}`;
+            const backButtonHTML = `<button id="back-to-categories" class="flex items-center gap-2 text-violet-600 font-semibold hover:text-violet-800">
+                                      <i data-lucide="arrow-left"></i> Back to Categories
+                                   </button>`;
+            const mobileFilterButton = `<div class="lg:hidden mb-6 text-center">
+                                            <button id="mobile-filter-btn" class="bg-white border-2 border-violet-500 text-violet-600 font-semibold py-2 px-6 rounded-full inline-flex items-center gap-2 shadow-sm">
+                                                <i data-lucide="filter"></i> Filters
+                                            </button>
+                                        </div>`;
 
             shopContent.innerHTML = `
                 <div class="container mx-auto px-4 py-12">
                     <div class="flex justify-between items-center mb-8">
                         ${backButtonHTML}
-                        <h1 class="font-display text-4xl md:text-5xl text-violet-900 text-center flex-grow">
-                            ${pageTitle}
-                        </h1>
+                        <h1 class="font-display text-4xl md:text-5xl text-violet-900 text-center flex-grow">${pageTitle}</h1>
                         <div class="w-48 text-right"></div>
                     </div>
                     ${mobileFilterButton}
                     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         <aside id="filters-sidebar" class="hidden lg:block lg:col-span-1 bg-white/60 p-6 rounded-lg shadow-sm h-fit self-start"></aside>
                         <div id="product-grid-container" class="lg:col-span-3">
-                            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-                            </div>
+                            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"></div>
                         </div>
                     </div>
                 </div>
                 ${getFooterHTML()}`;
             
-            applyFiltersAndRenderGrid(searchFilterFn);
+            applyFiltersAndRenderGrid();
             lucide.createIcons();
         };
 
@@ -397,8 +373,6 @@
             modalContainer.innerHTML = `<div class="modal-backdrop fixed inset-0 flex p-4"><div class="modal-box bg-white rounded-lg shadow-xl w-full ${maxWidth} m-auto relative pop-in ${scrollClass}">${content}</div></div>`;
             modalContainer.style.display = "flex";
             modalContainer.classList.remove('pointer-events-none');
-            // FIX: Add a dedicated event listener to the modal box to stop clicks from propagating to the background
-            modalContainer.querySelector('.modal-box').addEventListener('click', e => e.stopPropagation());
             lucide.createIcons();
         };
 
@@ -517,7 +491,7 @@
         const renderSignupModal = () => {
             const content = `
                 <div class="p-8 text-center">
-                    <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                     <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
                     <h2 class="font-display text-3xl mb-2">Create Account</h2>
                     <p class="text-gray-600 mb-6">Join the Kalakar family.</p>
                     <form id="signup-form" class="text-left">
@@ -563,16 +537,16 @@
                                     <h3 class="font-semibold mt-6 mb-2 text-lg">2. Delivery Method</h3>
                                     <div id="delivery-options-container" class="space-y-2">
                                         <div class="delivery-option p-3 rounded-lg flex items-center gap-4" data-delivery-cost="120">
-                                            <i data-lucide="truck" class="w-8 h-8 text-gray-600"></i>
-                                            <div><h4 class="font-bold">Inside Valley Delivery</h4><p class="text-xs text-gray-500">NPR 120 (1-2 days)</p></div>
+                                            <i data-lucide="truck" class="w-8 h-8 text-gray-600 pointer-events-none"></i>
+                                            <div class="pointer-events-none"><h4 class="font-bold">Inside Valley Delivery</h4><p class="text-xs text-gray-500">NPR 120 (1-2 days)</p></div>
                                         </div>
                                         <div class="delivery-option p-3 rounded-lg flex items-center gap-4" data-delivery-cost="220">
-                                            <i data-lucide="navigation" class="w-8 h-8 text-gray-600"></i>
-                                            <div><h4 class="font-bold">Outside Valley Delivery</h4><p class="text-xs text-gray-500">NPR 220 (2-4 days)</p></div>
+                                            <i data-lucide="navigation" class="w-8 h-8 text-gray-600 pointer-events-none"></i>
+                                            <div class="pointer-events-none"><h4 class="font-bold">Outside Valley Delivery</h4><p class="text-xs text-gray-500">NPR 220 (2-4 days)</p></div>
                                         </div>
                                         <div class="delivery-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
-                                            <i data-lucide="globe" class="w-8 h-8 text-gray-600"></i>
-                                            <div><h4 class="font-bold">International Shipping</h4><p class="text-xs text-red-500">Available soon</p></div>
+                                            <i data-lucide="globe" class="w-8 h-8 text-gray-600 pointer-events-none"></i>
+                                            <div class="pointer-events-none"><h4 class="font-bold">International Shipping</h4><p class="text-xs text-red-500">Available soon</p></div>
                                         </div>
                                     </div>
                                 </div>
@@ -618,7 +592,7 @@
         const renderQuickViewModal = (product) => {
              const content = `
                 <div class="flex flex-col md:flex-row">
-                    <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                     <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
                     <div class="w-full md:w-1/2 p-4"><img src="${product.images[0]}" alt="${product.name}" class="w-full h-full object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';"></div>
                     <div class="w-full md:w-1/2 p-8 flex flex-col text-center md:text-left">
                          <div class="modal-content-scroll">
@@ -649,11 +623,18 @@
 
         const renderProductDetailPage = (productId) => {
             const product = db.products.find(p => p.id === productId);
-            if (!product) return;
+            if (!product) {
+                navigate('home');
+                return;
+            };
             state.activeProduct = productId;
+            state.activeCategory = product.mainCat;
 
             const relatedProducts = db.products.filter(p => p.mainCat === product.mainCat && p.id !== product.id).slice(0, 4);
             const relatedProductsHTML = relatedProducts.map(p => createProductCard(p)).join('');
+            
+            shopContent.classList.remove('hidden');
+            categoryChoice.classList.add('hidden');
 
             shopContent.innerHTML = `
             <div class="container mx-auto px-4 py-12 slide-in-up">
@@ -694,7 +675,7 @@
                          <p>Despite facing his own set of hardships in a country grappling with change, Kunal was determined. He started Kalakar not just as a business, but as a movement. His vision was to create a sustainable platform that empowers local artisans, preserves our rich cultural heritage, and offers authentic, handcrafted treasures to you.</p>
                      </div>
                       <div class="mt-6 text-center">
-                          <button class="close-modal-btn text-sm text-violet-600 hover:underline">Return to Homepage</button>
+                          <button class="close-modal-btn text-sm text-violet-600 hover:underline">Close</button>
                       </div>
                 </div>`;
              renderModal(content, 'max-w-2xl', true);
@@ -711,11 +692,45 @@
                         <button type="submit" class="bg-violet-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-violet-700">Track</button>
                     </form>
                     <div id="order-status-result" class="mt-6 text-left"></div>
-                </div>
-            `;
+                </div>`;
             renderModal(content);
         };
 
+        const renderContactModal = () => {
+            const whatsappIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="text-white"><path d="M16.75 13.96c.25.13.41.2.52.28.14.1.23.22.33.35.08.1.15.22.2.33.05.13.07.25.07.38 0 .2-.06.4-.2.58-.14.18-.33.35-.56.48-.23.13-.5.25-.78.33-.28.08-.58.1-1.28.04-1.1-.1-2.16-.4-3.16-1-1-.6-1.85-1.34-2.55-2.2-1.03-1.26-1.6-2.6-1.7-3.9-.02-.3.04-.6.1-.88.06-.28.18-.55.33-.78.15-.23.35-.44.58-.6.23-.16.48-.3.75-.38.27-.08.5-.1.7-.1l.15.02c.3.04.58.12.82.27.24.14.45.32.6.52.15.2.28.4.38.62.1.22.15.42.15.63 0 .2-.04.4-.1.6-.08.2-.18.38-.3.53-.13.15-.28.28-.45.4-.17.12-.33.22-.5.3-.17.08-.32.15-.45.23-.13.08-.2.13-.2.13s-.08.05-.13.13c-.05.08-.07.15-.07.28 0 .3.2.58.52.82.33.24.68.45 1.05.6.37.15.72.28 1.05.38.33.1.65.16.95.16.25 0 .5-.04.7-.13.2-.1.4-.2.58-.33.18-.13.35-.28.48-.45.13-.17.25-.37.33-.58.08-.2.1-.4.1-.6.02-1.07-.48-1.95-1.2-2.62-.7-.68-1.55-1.1-2.5-1.25-.97-.15-1.9-.04-2.8.3-1.1.42-2.1 1.14-2.95 2.1s-1.4 2-1.78 3.06c-.38 1.05-.5 2.1-.38 3.15.13 1.05.5 2.05 1.1 3 .6.95 1.4 1.78 2.38 2.45 1 .68 2.05 1.15 3.18 1.4.28.05.55.08.83.08.57 0 1.12-.08 1.66-.22.54-.14 1.05-.37 1.5-.68.45-.3.85-.7 1.15-1.15.3-.45.5-.95.62-1.48.12-.53.16-1.08.1-1.6-.2-1.7-1.1-3.2-2.4-4.15-1.33-.95-2.9-1.28-4.34-1z"/></svg>`;
+            const content = `
+                <div class="p-8 text-left modal-content-scroll">
+                     <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                     <h2 class="font-display text-3xl mb-2 text-center">Contact Us</h2>
+                     <p class="text-gray-600 mb-6 text-center">Have a question? We'd love to hear from you.</p>
+
+                     <a href="https://wa.me/9779811111111" target="_blank" rel="noopener noreferrer" class="mb-6 bg-green-500 text-white w-full flex items-center justify-center gap-3 py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors">
+                        ${whatsappIconSVG}
+                        Chat on WhatsApp
+                     </a>
+                     
+                     <p class="text-center text-gray-500 my-4">-- OR --</p>
+
+                     <form id="contact-us-form">
+                        <div class="space-y-4">
+                            <input type="text" placeholder="Full Name" class="w-full p-2 border rounded" required>
+                            <input type="text" placeholder="Email or Phone Number" class="w-full p-2 border rounded" required>
+                            <select name="queryType" class="w-full p-2 border rounded bg-white" required>
+                                <option value="" disabled selected>Select Nature of Query...</option>
+                                <option value="General Query">General Query</option>
+                                <option value="Order Delayed">Order Delayed</option>
+                                <option value="Payment Issue">Payment Issue</option>
+                                <option value="Complaint">Complaint</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <textarea placeholder="Your Message..." rows="4" class="w-full p-2 border rounded" required></textarea>
+                        </div>
+                        <button type="submit" class="mt-6 w-full bg-violet-600 text-white py-3 rounded-lg font-semibold hover:bg-violet-700">Send Message</button>
+                     </form>
+                </div>`;
+            renderModal(content, 'max-w-lg', true);
+        };
+        
         const getFilterContentHTML = () => {
             const products = db.products.filter(p => p.mainCat === state.activeCategory);
             if(products.length === 0) return '';
@@ -724,23 +739,9 @@
             const allColors = [...new Set(products.flatMap(p => p.colors || []))];
             const allSizes = [...new Set(products.flatMap(p => p.sizes || []))];
 
-            const typesHTML = allTypes.map(type => `
-                <label class="flex items-center space-x-2 text-sm">
-                    <input type="checkbox" class="filter-type" value="${type}" ${state.filters.types.includes(type) ? 'checked' : ''}>
-                    <span>${type}</span>
-                </label>`).join('');
-            
-            const colorsHTML = allColors.map(color => `
-                <label class="flex items-center space-x-2 text-sm">
-                    <input type="checkbox" class="filter-color" value="${color}" ${state.filters.colors.includes(color) ? 'checked' : ''}>
-                    <span>${color}</span>
-                </label>`).join('');
-
-            const sizesHTML = allSizes.map(size => `
-                <label class="flex items-center space-x-2 text-sm">
-                    <input type="checkbox" class="filter-size" value="${size}" ${state.filters.sizes.includes(size) ? 'checked' : ''}>
-                    <span>${size}</span>
-                </label>`).join('');
+            const typesHTML = allTypes.map(type => `<label class="flex items-center space-x-2 text-sm"><input type="checkbox" class="filter-type" value="${type}" ${state.filters.types.includes(type) ? 'checked' : ''}><span>${type}</span></label>`).join('');
+            const colorsHTML = allColors.map(color => `<label class="flex items-center space-x-2 text-sm"><input type="checkbox" class="filter-color" value="${color}" ${state.filters.colors.includes(color) ? 'checked' : ''}><span>${color}</span></label>`).join('');
+            const sizesHTML = allSizes.map(size => `<label class="flex items-center space-x-2 text-sm"><input type="checkbox" class="filter-size" value="${size}" ${state.filters.sizes.includes(size) ? 'checked' : ''}><span>${size}</span></label>`).join('');
             
             return `
                 ${typesHTML.length > 0 ? `<div class="filter-section"><h3>Type</h3><div class="space-y-2">${typesHTML}</div></div>` : ''}
@@ -756,10 +757,7 @@
                 ${sizesHTML.length > 0 ? `<div class="filter-section"><h3>Size</h3><div class="space-y-2">${sizesHTML}</div></div>` : ''}
                 <div class="filter-section">
                     <h3>Availability</h3>
-                    <label class="flex items-center space-x-2 text-sm">
-                        <input type="checkbox" id="filter-stock" ${state.filters.inStock ? 'checked' : ''}>
-                        <span>In Stock Only</span>
-                    </label>
+                    <label class="flex items-center space-x-2 text-sm"><input type="checkbox" id="filter-stock" ${state.filters.inStock ? 'checked' : ''}><span>In Stock Only</span></label>
                 </div>
             `;
         };
@@ -777,8 +775,7 @@
                         <button id="apply-filters-btn" class="w-full bg-violet-600 text-white py-2 rounded-lg font-semibold">Apply Filters</button>
                         <button id="reset-filters-btn" class="w-full text-sm text-violet-600 hover:underline">Reset Filters</button>
                     </div>
-                </div>
-            `;
+                </div>`;
             renderModal(content, 'max-w-md', true);
         };
 
@@ -815,9 +812,7 @@
                     ? db.products.filter(p => p.mainCat === state.activeCategory)
                     : [];
 
-            if (!searchFilterFn) {
-                renderFilters();
-            }
+            if (!searchFilterFn) renderFilters();
 
             const filteredProducts = baseProducts.filter(p => {
                 const { types, colors, sizes, inStock, currentMax } = state.filters;
@@ -915,24 +910,6 @@
             updateWishlist();
         };
 
-        const updateCheckoutTotals = () => {
-            const deliveryFeeEl = getEl('delivery-fee');
-            const totalAmountEl = getEl('total-amount');
-            const confirmBtn = getEl('confirm-order-btn');
-
-            if (state.deliveryCharge > 0) {
-                let subtotal = db.cart.reduce((sum, item) => sum + (db.products.find(p => p.id === item.id).price * item.quantity), 0);
-                const total = subtotal + state.deliveryCharge;
-                deliveryFeeEl.textContent = `NPR ${state.deliveryCharge.toLocaleString()}`;
-                totalAmountEl.textContent = `NPR ${total.toLocaleString()}`;
-                confirmBtn.disabled = false;
-            } else {
-                deliveryFeeEl.textContent = '--';
-                totalAmountEl.textContent = '--';
-                confirmBtn.disabled = true;
-            }
-        };
-
         const updateFiltersFromUI = (container) => {
             state.filters.currentMax = parseInt(container.querySelector('#price-range-slider').value);
             state.filters.inStock = container.querySelector('#filter-stock').checked;
@@ -942,123 +919,175 @@
         };
         
         // ===================================================================================
-        // V. EVENT LISTENERS
+        // V. EVENT LISTENERS & ROUTING
         // ===================================================================================
+        
+        const renderHome = () => {
+            state.activeCategory = null;
+            state.activeProduct = null;
+            document.body.className = 'text-gray-800 default-bg';
+            shopContent.classList.add('hidden');
+            categoryChoice.classList.remove('hidden');
+            categoryChoice.innerHTML = `
+                <div class="min-h-screen flex flex-col items-center justify-center text-center p-6">
+                    <h1 class="font-display text-4xl md:text-6xl text-violet-900 mb-4 slide-in-up">Namaste! Welcome to Kalakar</h1>
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-12 slide-in-up" style="animation-delay: 0.2s;">Choose your journey into authentic Nepali craftsmanship.</p>
+                    <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl pop-in">
+                        <div class="category-choice-card cursor-pointer group relative rounded-lg overflow-hidden shadow-lg" data-category="Jewelry">
+                          <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1887&q=80" class="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-110">
+                          <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><h2 class="font-display text-4xl text-white">Jewelry</h2></div>
+                        </div>
+                        <div class="category-choice-card cursor-pointer group relative rounded-lg overflow-hidden shadow-lg" data-category="Cosmetics">
+                          <img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&q=80&w=1887" class="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-110">
+                          <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><h2 class="font-display text-4xl text-white">Cosmetics</h2></div>
+                        </div>
+                    </div>
+                </div>`;
+            document.querySelectorAll('#search-input-desktop').forEach(i => i.value = '');
+            closeSidebar();
+            window.scrollTo(0, 0);
+            lucide.createIcons();
+        };
+
+        const navigate = (page, data, replace = false) => {
+            const newState = { page, data };
+            let path = window.location.pathname;
+            let hash = '';
+
+            if (page === 'category') hash = `#${data.toLowerCase()}`;
+            else if (page === 'product') hash = `#product/${data}`;
+            
+            if (history.state?.page !== newState.page || history.state?.data !== newState.data) {
+                if (replace) {
+                    history.replaceState(newState, '', path + hash);
+                } else {
+                    history.pushState(newState, '', path + hash);
+                }
+            }
+            
+            route(page, data);
+        };
+        
+        const route = (page, data) => {
+            closeModal();
+            closeSidebar();
+            if (page === 'category') {
+                renderShopLayout(data);
+            } else if (page === 'product') {
+                renderProductDetailPage(data);
+            } else {
+                renderHome();
+            }
+        };
+        
+        window.addEventListener('popstate', (event) => {
+            if (event.state) {
+                route(event.state.page, event.state.data);
+            } else {
+                route('home');
+            }
+        });
+
         const setupEventListeners = () => {
+            // Main click handler for the entire app
             document.body.addEventListener('click', (e) => {
-                // If the click is on the dark overlay of a modal, close it.
-                if (e.target.classList.contains('modal-backdrop')) {
-                    closeModal();
+                const target = e.target;
+                
+                // Close modal if backdrop is clicked
+                if (target.classList.contains('modal-backdrop')) {
+                    closeModal(); return;
+                }
+                
+                // If a click is inside a modal, let its own listener handle it.
+                if (target.closest('.modal-box')) {
                     return;
                 }
                 
-                // Find the closest interactive element.
-                const target = e.target.closest('button, a, div.category-choice-card, div.delivery-option');
-                if (!target) return; // If not an interactive element, do nothing.
+                const interactiveEl = target.closest('button, a, div.category-choice-card');
+                if (!interactiveEl) return;
+
+                const id = interactiveEl.id;
+                const classList = interactiveEl.classList;
+                const dataId = interactiveEl.dataset.id;
                 
-                const id = target.id;
-                const classList = target.classList;
-                const dataId = target.dataset.id;
-                
-                // --- Category & Page Navigation ---
+                // --- Routing and Page Navigation ---
                 if (classList.contains('category-choice-card') || classList.contains('category-link')) {
-                    e.preventDefault();
-                    state.activeCategory = target.dataset.category;
-                    state.activeProduct = null;
-                    const productsForCategory = db.products.filter(p => p.mainCat === state.activeCategory);
-                    resetFilters(productsForCategory);
-                    document.body.className = `text-gray-800 ${state.activeCategory === 'Jewelry' ? 'jewelry-bg' : 'cosmetics-bg'}`;
-                    categoryChoice.classList.add('hidden');
-                    shopContent.classList.remove('hidden');
-                    renderShopLayout();
-                } else if (id === 'brand-logo' || id === 'back-to-categories' || classList.contains('go-shopping-btn')) {
-                    e.preventDefault();
-                    state.activeCategory = null;
-                    state.activeProduct = null;
-                    document.body.className = 'text-gray-800 default-bg';
-                    shopContent.classList.add('hidden');
-                    shopContent.innerHTML = '';
-                    categoryChoice.classList.remove('hidden');
-                    document.querySelectorAll('#search-input-desktop, #search-input-mobile').forEach(i => i.value = '');
-                    closeSidebar();
-                    window.scrollTo(0,0);
+                    e.preventDefault(); navigate('category', interactiveEl.dataset.category);
+                } else if (id === 'brand-logo' || classList.contains('go-shopping-btn')) {
+                    e.preventDefault(); navigate('home');
+                } else if (id === 'back-to-categories') {
+                    e.preventDefault(); navigate('home');
                 } else if (id === 'back-to-shop') {
-                    e.preventDefault();
-                    state.activeProduct = null;
-                    renderShopLayout();
-                    window.scrollTo(0,0);
+                    e.preventDefault(); navigate('category', state.activeCategory);
                 } else if (classList.contains('product-link')) {
-                    e.preventDefault();
-                    renderProductDetailPage(dataId);
-                    window.scrollTo(0, 0);
+                    e.preventDefault(); navigate('product', dataId);
                 }
                 
-                // --- Sidebar and Modal Controls ---
+                // --- Sidebar and Modal Triggers (Non-routing) ---
                 else if (id === 'cart-btn' || id === 'mobile-cart-btn') { e.preventDefault(); renderCartSidebar(); }
                 else if (id === 'wishlist-btn' || id === 'mobile-wishlist-btn') { e.preventDefault(); renderWishlistSidebar(); }
                 else if (id === 'mobile-search-btn') { e.preventDefault(); renderMobileSearchModal(); }
                 else if (id === 'mobile-filter-btn') { e.preventDefault(); renderMobileFilterModal(); }
                 else if (id === 'login-btn') { e.preventDefault(); renderLoginModal(); }
-                else if (id === 'signup-link') { e.preventDefault(); renderSignupModal(); }
-                else if (id === 'login-link') { e.preventDefault(); renderLoginModal(); }
                 else if (id === 'our-story-link') { e.preventDefault(); renderOurStoryModal(); }
                 else if (id === 'track-order-link') { e.preventDefault(); renderTrackOrderModal(); }
+                else if (id === 'contact-us-link') { e.preventDefault(); renderContactModal(); }
                 else if (id === 'logout-btn') {
                     e.preventDefault();
-                    state.isLoggedIn = false;
-                    state.customerName = 'Guest';
-                    saveStateToLocalStorage();
-                    renderHeader(); showToast('You have been logged out.', 'info');
-                }
-                else if (classList.contains('close-sidebar-btn')) { e.preventDefault(); closeSidebar(); }
-                else if (classList.contains('close-modal-btn')) { e.preventDefault(); closeModal(); }
-                else if (id === 'checkout-btn') { 
-                    e.preventDefault();
-                    closeSidebar(); 
-                    renderCheckoutModal(); 
+                    state.isLoggedIn = false; state.customerName = 'Guest';
+                    saveStateToLocalStorage(); renderHeader(); showToast('You have been logged out.', 'info');
+                } else if (classList.contains('close-sidebar-btn')) {
+                    e.preventDefault(); closeSidebar();
+                } else if (id === 'checkout-btn') { 
+                    e.preventDefault(); closeSidebar(); renderCheckoutModal(); 
                 }
                 
                 // --- Product Actions ---
                 else if (classList.contains('add-to-cart-btn')) { e.preventDefault(); handleAddToCart(dataId); }
                 else if (classList.contains('wishlist-toggle-btn') || classList.contains('wishlist-toggle-btn-card')) { e.preventDefault(); handleToggleWishlist(dataId); }
-                else if (classList.contains('quick-view-btn')) {
-                    e.preventDefault();
-                    renderQuickViewModal(db.products.find(p => p.id === dataId));
-                }
-                else if(classList.contains('view-full-details-btn')) {
-                    e.preventDefault(); closeModal(); renderProductDetailPage(dataId); window.scrollTo(0, 0);
-                }
                 else if (classList.contains('remove-from-cart')) { e.preventDefault(); handleRemoveFromCart(dataId); }
-                else if (classList.contains('qty-change')) { e.preventDefault(); handleQtyChange(dataId, parseInt(target.dataset.change)); }
-
-                // --- Checkout Actions ---
-                else if (classList.contains('delivery-option')) {
-                    e.preventDefault();
-                    if (target.classList.contains('opacity-50')) return;
-                    state.deliveryCharge = parseInt(target.dataset.deliveryCost);
-                    target.closest('.modal-box').querySelectorAll('.delivery-option').forEach(opt => opt.classList.remove('selected'));
-                    target.classList.add('selected');
-                    updateCheckoutTotals();
-                }
-
-                // --- Filter Actions ---
-                 else if (id === 'reset-filters-btn') {
-                    const productsForCategory = db.products.filter(p => p.mainCat === state.activeCategory);
-                    resetFilters(productsForCategory);
-                    if (document.getElementById('mobile-filters-container')) {
-                         renderMobileFilterModal(); // Re-render modal with reset values
-                    } else {
-                         applyFiltersAndRenderGrid();
-                    }
-                } else if (id === 'apply-filters-btn') {
-                    updateFiltersFromUI(getEl('mobile-filters-container'));
-                    applyFiltersAndRenderGrid();
-                    closeModal();
-                }
+                else if (classList.contains('qty-change')) { e.preventDefault(); handleQtyChange(dataId, parseInt(interactiveEl.dataset.change)); }
 
                 lucide.createIcons();
             });
 
+            // This listener is specifically for actions WITHIN a modal to prevent conflicts.
+            modalContainer.addEventListener('click', e => {
+                const target = e.target.closest('.close-modal-btn, a, button, .delivery-option');
+                if (!target) return;
+                
+                const id = target.id;
+                const classList = target.classList;
+
+                if (classList.contains('close-modal-btn')) {
+                    closeModal();
+                } else if (id === 'signup-link') {
+                    closeModal(); renderSignupModal();
+                } else if (id === 'login-link') {
+                    closeModal(); renderLoginModal();
+                } else if (classList.contains('view-full-details-btn')) {
+                    closeModal(); navigate('product', target.dataset.id);
+                } else if (classList.contains('delivery-option')) {
+                    if (target.classList.contains('opacity-50')) return;
+                    state.deliveryCharge = parseInt(target.dataset.deliveryCost);
+                    target.closest('.modal-box').querySelectorAll('.delivery-option').forEach(opt => opt.classList.remove('selected'));
+                    target.classList.add('selected');
+                    const confirmBtn = document.getElementById('confirm-order-btn');
+                    if (confirmBtn) confirmBtn.disabled = false;
+                } else if (id === 'apply-filters-btn') {
+                    updateFiltersFromUI(modalContainer.querySelector('#mobile-filters-container'));
+                    applyFiltersAndRenderGrid();
+                    closeModal();
+                } else if (id === 'reset-filters-btn') {
+                     resetFilters(db.products.filter(p => p.mainCat === state.activeCategory));
+                     renderMobileFilterModal();
+                } else if(id === 'confirm-order-btn') {
+                    // This is handled by the form submit event, do nothing here.
+                }
+            });
+
+
+            // Event listeners for filter changes (which don't navigate)
             const handleFilterChange = (container) => {
                 if(!container) return;
                 updateFiltersFromUI(container);
@@ -1069,7 +1098,7 @@
                  const container = e.target.closest('#filters-sidebar, #mobile-filters-container');
                  if (e.target.id === 'price-range-slider' && container) {
                     container.querySelector('#price-range-value').textContent = `NPR ${parseInt(e.target.value).toLocaleString()}`;
-                    if(e.target.closest('#filters-sidebar')) { // Only apply live for desktop
+                    if(e.target.closest('#filters-sidebar')) {
                          handleFilterChange(container);
                     }
                  }
@@ -1081,6 +1110,7 @@
                  }
             });
 
+            // Event listeners for form submissions
             document.body.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const formId = e.target.id;
@@ -1089,14 +1119,10 @@
                     const inputId = formId === 'search-form' ? 'search-input-desktop' : 'search-input-mobile';
                     const query = getEl(inputId).value.toLowerCase();
                     if (!query) return;
-                    
                     const searchFilterFn = p => p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query) || p.tags.some(tag => tag.toLowerCase().includes(query));
-                    
                     if (formId === 'search-form-mobile') closeModal();
-                    
-                    categoryChoice.classList.add('hidden');
-                    shopContent.classList.remove('hidden');
-                    renderShopLayout(`Search Results for "${query}"`, searchFilterFn);
+                    renderShopLayout('Search Results');
+                    applyFiltersAndRenderGrid(searchFilterFn);
                 }
                 else if (formId === 'login-form' || formId === 'signup-form') {
                     const nameInput = e.target.querySelector('input[type="text"]');
@@ -1107,9 +1133,9 @@
                     renderHeader();
                     showToast(`Welcome, ${state.customerName}!`, 'success');
                 } else if (formId === 'confirm-order-form') {
-                    const name = getEl('customer-name').value;
-                    const address = getEl('customer-address').value;
-                    const phone = getEl('customer-phone').value;
+                    const name = modalContainer.querySelector('#customer-name').value;
+                    const address = modalContainer.querySelector('#customer-address').value;
+                    const phone = modalContainer.querySelector('#customer-phone').value;
                     if (!name || !address || !phone) { showToast('Please fill in all shipping details.', 'error'); return; }
                     
                     const orderId = `KAL${state.orderCounter++}`;
@@ -1120,11 +1146,14 @@
                     saveStateToLocalStorage();
                     showToast(`Order Confirmed! Your Order ID is ${orderId}.`, 'success');
                 } else if (formId === 'track-order-form') {
-                    const orderIdToTrack = getEl('track-order-id').value.toUpperCase();
-                    const order = db.orders.find(o => o.id === orderIdToTrack);
-                    getEl('order-status-result').innerHTML = order
-                        ? `<p class="text-green-600 font-semibold">Order found! Status: <span class="bg-green-100 p-1 rounded">${order.status}</span></p>`
-                        : `<p class="text-red-500 font-semibold">Order ID not found. Please check and try again.</p>`;
+                     const orderIdToTrack = modalContainer.querySelector('#track-order-id').value.toUpperCase();
+                     const order = db.orders.find(o => o.id === orderIdToTrack);
+                     modalContainer.querySelector('#order-status-result').innerHTML = order
+                         ? `<p class="text-green-600 font-semibold">Order found! Status: <span class="bg-green-100 p-1 rounded">${order.status}</span></p>`
+                         : `<p class="text-red-500 font-semibold">Order ID not found. Please check and try again.</p>`;
+                } else if (formId === 'contact-us-form') {
+                    closeModal();
+                    showToast('Thank you! Your message has been received.', 'success');
                 }
             });
 
@@ -1144,21 +1173,23 @@
         function init() {
             loadStateFromLocalStorage();
             renderHeader();
-            categoryChoice.innerHTML = `
-                <h1 class="font-display text-4xl md:text-6xl text-violet-900 mb-4 slide-in-up">Namaste! Welcome to Kalakar</h1>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-12 slide-in-up" style="animation-delay: 0.2s;">Choose your journey into authentic Nepali craftsmanship.</p>
-                <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl pop-in">
-                    <div class="category-choice-card cursor-pointer group relative rounded-lg overflow-hidden shadow-lg" data-category="Jewelry">
-                      <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1887&q=80" class="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-110">
-                      <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><h2 class="font-display text-4xl text-white">Jewelry</h2></div>
-                    </div>
-                    <div class="category-choice-card cursor-pointer group relative rounded-lg overflow-hidden shadow-lg" data-category="Cosmetics">
-                      <img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&q=80&w=1887" class="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-110">
-                      <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><h2 class="font-display text-4xl text-white">Cosmetics</h2></div>
-                    </div>
-                </div>`;
             setupEventListeners();
-            lucide.createIcons();
+            
+            const hash = window.location.hash;
+            if (hash.startsWith('#product/')) {
+                const productId = hash.substring(9);
+                navigate('product', productId, true);
+            } else if (hash && hash.length > 1) {
+                const category = hash.substring(1).charAt(0).toUpperCase() + hash.substring(2);
+                if (db.products.some(p => p.mainCat.toLowerCase() === category.toLowerCase())) {
+                    navigate('category', category, true);
+                } else {
+                    navigate('home', null, true);
+                }
+            } else {
+                navigate('home', null, true);
+            }
+            
             updateCart();
             updateWishlist();
         }
