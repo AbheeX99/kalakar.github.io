@@ -62,6 +62,7 @@
         
         /* --- Component Styles --- */
         .modal-backdrop { background-color: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; }
+        .modal-content-scroll { max-height: 85vh; overflow-y: auto; }
         .sidebar { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); transform: translateX(100%); }
         .sidebar.open { transform: translateX(0); }
         .wishlist-toggle-btn.active i, .wishlist-toggle-btn-card.active { color: #ef4444; fill: #ef4444; border-color: #ef4444; }
@@ -71,7 +72,7 @@
             position: relative; 
             transition: transform 0.3s ease, box-shadow 0.3s ease; 
             border: 1px solid #f0e9e9;
-            border-radius: 1rem; /* Softer, classier corners */
+            border-radius: 1rem;
         }
         .product-card:hover { 
             transform: translateY(-10px); 
@@ -142,7 +143,7 @@
 <body class="text-gray-800 default-bg">
     <div id="scroll-progress-bar-container"><div id="scroll-progress-bar"></div></div>
     
-    <div id="app" class="relative">
+    <div id="app" class="relative max-w-screen-2xl mx-auto">
         <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-30 shadow-md border-b border-gray-200"></header>
         <main>
             <section id="category-choice" class="min-h-screen flex flex-col items-center justify-center text-center p-6"></section>
@@ -196,7 +197,7 @@
             selectedPaymentMethod: 'cod',
             deliveryCharge: 0, 
             orderCounter: 1,
-            filters: {} // NEW: To store active filter values
+            filters: {}
         };
 
         // ===================================================================================
@@ -238,12 +239,14 @@
              headerEl.innerHTML = `
                  <div class="container mx-auto px-6 py-3 flex justify-between items-center">
                      <a href="#" id="brand-logo" class="font-display text-3xl text-violet-800">Kalakar</a>
+                     
                      <div class="flex-1 max-w-xl mx-4 hidden md:block">
                          <form id="search-form" class="relative">
-                             <input type="search" id="search-input" placeholder="Search for products..." class="w-full p-2 pl-10 border border-gray-300 rounded-full focus:ring-2 focus:ring-violet-300 focus:border-violet-300 transition-all">
+                             <input type="search" id="search-input-desktop" placeholder="Search for products..." class="w-full p-2 pl-10 border border-gray-300 rounded-full focus:ring-2 focus:ring-violet-300 focus:border-violet-300 transition-all">
                              <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
                          </form>
                      </div>
+
                      <div class="hidden md:flex items-center space-x-6">
                          <button id="wishlist-btn" class="relative flex items-center gap-2 text-gray-600 hover:text-violet-600">
                              <i data-lucide="heart" class="w-6 h-6"></i>
@@ -256,16 +259,60 @@
                             <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">${db.cart.reduce((sum, item) => sum + item.quantity, 0)}</span>
                          </button>
                      </div>
-                     <div class="flex items-center gap-4 ml-4">
+
+                     <div class="flex items-center gap-2 md:gap-4 md:ml-4">
                          ${loginButtonHTML}
                          <div class="md:hidden flex items-center">
-                             <button id="mobile-cart-btn" class="relative text-gray-600 p-2"><i data-lucide="shopping-cart"></i><span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${db.cart.reduce((sum, item) => sum + item.quantity, 0)}</span></button>
+                             <button id="mobile-search-btn" class="relative text-gray-600 p-2"><i data-lucide="search"></i></button>
                              <button id="mobile-wishlist-btn" class="relative text-gray-600 p-2"><i data-lucide="heart"></i><span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${db.wishlist.length}</span></button>
+                             <button id="mobile-cart-btn" class="relative text-gray-600 p-2"><i data-lucide="shopping-cart"></i><span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${db.cart.reduce((sum, item) => sum + item.quantity, 0)}</span></button>
                          </div>
                      </div>
                  </div>`;
         };
 
+        const getFooterHTML = () => {
+            return `
+                 <footer class="bg-violet-900/95 text-white p-10 mt-16">
+                     <div class="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
+                         <div>
+                             <h3 class="font-display text-2xl mb-2">Kalakar</h3>
+                             <p class="text-violet-200 text-sm">Authentic crafts from the heart of Kathmandu.</p>
+                             <div class="mt-4 text-violet-200 text-sm space-y-1">
+                                 <p><i data-lucide="phone" class="inline w-4 h-4 mr-2"></i> Helpdesk: +977-9800000000</p>
+                                 <p><i data-lucide="message-circle" class="inline w-4 h-4 mr-2"></i> WhatsApp: +977-9811111111</p>
+                             </div>
+                         </div>
+                         <div>
+                             <h4 class="font-bold uppercase tracking-wider mb-3">Shop</h4>
+                             <a href="#" class="block text-sm hover:text-violet-200 mb-2 category-link" data-category="Jewelry">Jewelry</a>
+                             <a href="#" class="block text-sm hover:text-violet-200 mb-2 category-link" data-category="Cosmetics">Cosmetics</a>
+                             <a href="#" id="track-order-link" class="block text-sm hover:text-violet-200 mb-2">Track My Order</a>
+                         </div>
+                         <div>
+                             <h4 class="font-bold uppercase tracking-wider mb-3">About</h4>
+                             <a href="#" id="our-story-link" class="block text-sm hover:text-violet-200 mb-2">Our Story</a>
+                             <a href="#" class="block text-sm hover:text-violet-200 mb-2">Artisans</a>
+                             <a href="#" class="block text-sm hover:text-violet-200 mb-2">Contact Us</a>
+                         </div>
+                         <div>
+                              <h4 class="font-bold uppercase tracking-wider mb-3">Follow Us</h4>
+                              <div class="flex justify-center md:justify-start space-x-4">
+                                  <a href="#" class="hover:text-violet-200"><i data-lucide="instagram"></i></a>
+                                  <a href="#" class="hover:text-violet-200"><i data-lucide="facebook"></i></a>
+                                  <a href="#" class="hover:text-violet-200"><i data-lucide="twitter"></i></a>
+                                  <a href="#" class="hover:text-violet-200"><i data-lucide="youtube"></i></a>
+                                  <a href="#" class="hover:text-violet-200"><i data-lucide="linkedin"></i></a>
+                              </div>
+                         </div>
+                     </div>
+                     <div class="text-center text-violet-300 text-xs mt-10 border-t border-violet-700 pt-6">
+                         &copy; ${new Date().getFullYear()} Kalakar Nepal. All Rights Reserved. Swayambhu, Kathmandu, Nepal.
+                     </div>
+                 </footer>
+             `;
+        };
+        
         const renderShopLayout = (pageTitleOverride = null, searchFilterFn = null) => {
             const pageTitle = pageTitleOverride || `Discover our ${state.activeCategory}`;
             
@@ -274,28 +321,37 @@
                       <i data-lucide="arrow-left"></i> Back to Categories
                    </button>`
                 : `<div class="w-48"></div>`;
+            
+            const mobileFilterButton = searchFilterFn ? '' : `
+                <div class="lg:hidden mb-6 text-center">
+                    <button id="mobile-filter-btn" class="bg-white border-2 border-violet-500 text-violet-600 font-semibold py-2 px-6 rounded-full inline-flex items-center gap-2 shadow-sm">
+                        <i data-lucide="filter"></i> Filters
+                    </button>
+                </div>
+            `;
 
             shopContent.innerHTML = `
                 <div class="container mx-auto px-4 py-12">
-                    <div class="flex justify-between items-center mb-12">
+                    <div class="flex justify-between items-center mb-8">
                         ${backButtonHTML}
-                        <h1 class="font-display text-4xl md:text-5xl text-violet-900 text-center">
+                        <h1 class="font-display text-4xl md:text-5xl text-violet-900 text-center flex-grow">
                             ${pageTitle}
                         </h1>
                         <div class="w-48 text-right"></div>
                     </div>
+                    ${mobileFilterButton}
                     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                        <aside id="filters-sidebar" class="lg:col-span-1 bg-white/60 p-6 rounded-lg shadow-sm h-fit self-start"></aside>
+                        <aside id="filters-sidebar" class="hidden lg:block lg:col-span-1 bg-white/60 p-6 rounded-lg shadow-sm h-fit self-start"></aside>
                         <div id="product-grid-container" class="lg:col-span-3">
-                            <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                                </div>
+                            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                            </div>
                         </div>
                     </div>
-                </div>`;
+                </div>
+                ${getFooterHTML()}`;
             
-            // Initial render of filters and products
             applyFiltersAndRenderGrid(searchFilterFn);
-            renderFooter();
+            lucide.createIcons();
         };
 
         const createProductCard = (product) => {
@@ -335,58 +391,14 @@
                     </div>
                 </div>`;
         };
-
-        const renderFooter = () => {
-             const footer = document.createElement('footer');
-             footer.className = "bg-violet-900/95 text-white p-10 mt-16";
-             footer.innerHTML = `
-                 <div class="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
-                     <div>
-                         <h3 class="font-display text-2xl mb-2">Kalakar</h3>
-                         <p class="text-violet-200 text-sm">Authentic crafts from the heart of Kathmandu.</p>
-                         <div class="mt-4 text-violet-200 text-sm space-y-1">
-                             <p><i data-lucide="phone" class="inline w-4 h-4 mr-2"></i> Helpdesk: +977-9800000000</p>
-                             <p><i data-lucide="message-circle" class="inline w-4 h-4 mr-2"></i> WhatsApp: +977-9811111111</p>
-                         </div>
-                     </div>
-                     <div>
-                         <h4 class="font-bold uppercase tracking-wider mb-3">Shop</h4>
-                         <a href="#" class="block text-sm hover:text-violet-200 mb-2 category-link" data-category="Jewelry">Jewelry</a>
-                         <a href="#" class="block text-sm hover:text-violet-200 mb-2 category-link" data-category="Cosmetics">Cosmetics</a>
-                         <a href="#" id="track-order-link" class="block text-sm hover:text-violet-200 mb-2">Track My Order</a>
-                     </div>
-                     <div>
-                         <h4 class="font-bold uppercase tracking-wider mb-3">About</h4>
-                         <a href="#" id="our-story-link" class="block text-sm hover:text-violet-200 mb-2">Our Story</a>
-                         <a href="#" class="block text-sm hover:text-violet-200 mb-2">Artisans</a>
-                         <a href="#" class="block text-sm hover:text-violet-200 mb-2">Contact Us</a>
-                     </div>
-                     <div>
-                          <h4 class="font-bold uppercase tracking-wider mb-3">Follow Us</h4>
-                          <div class="flex justify-center md:justify-start space-x-4">
-                              <a href="#" class="hover:text-violet-200"><i data-lucide="instagram"></i></a>
-                              <a href="#" class="hover:text-violet-200"><i data-lucide="facebook"></i></a>
-                              <a href="#" class="hover:text-violet-200"><i data-lucide="twitter"></i></a>
-                              <a href="#" class="hover:text-violet-200"><i data-lucide="youtube"></i></a>
-                              <a href="#" class="hover:text-violet-200"><i data-lucide="linkedin"></i></a>
-                          </div>
-                     </div>
-                 </div>
-                 <div class="text-center text-violet-300 text-xs mt-10 border-t border-violet-700 pt-6">
-                     &copy; ${new Date().getFullYear()} Kalakar Nepal. All Rights Reserved. Swayambhu, Kathmandu, Nepal.
-                 </div>
-             `;
-             const existingFooter = shopContent.querySelector('footer');
-             if (existingFooter) {
-                 existingFooter.remove();
-             }
-             shopContent.appendChild(footer);
-        };
-
-        const renderModal = (content, maxWidth = 'max-w-md') => {
-            modalContainer.innerHTML = `<div class="modal-backdrop fixed inset-0 flex p-4"><div class="bg-white rounded-lg shadow-xl w-full ${maxWidth} m-auto relative pop-in">${content}</div></div>`;
+        
+        const renderModal = (content, maxWidth = 'max-w-md', isScrollable = false) => {
+            const scrollClass = isScrollable ? 'modal-content-scroll' : '';
+            modalContainer.innerHTML = `<div class="modal-backdrop fixed inset-0 flex p-4"><div class="modal-box bg-white rounded-lg shadow-xl w-full ${maxWidth} m-auto relative pop-in ${scrollClass}">${content}</div></div>`;
             modalContainer.style.display = "flex";
             modalContainer.classList.remove('pointer-events-none');
+            // FIX: Add a dedicated event listener to the modal box to stop clicks from propagating to the background
+            modalContainer.querySelector('.modal-box').addEventListener('click', e => e.stopPropagation());
             lucide.createIcons();
         };
 
@@ -530,91 +542,109 @@
                 return `<li class="flex justify-between text-sm py-1"><span class="text-gray-600">${item.quantity} x ${product.name}</span><span class="font-medium">NPR ${(item.quantity * product.price).toLocaleString()}</span></li>`;
             }).join('');
             
-            state.deliveryCharge = 0; // Reset on modal render
+            state.deliveryCharge = 0; 
 
             const content = `
-                <div class="p-8">
-                    <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
-                    <h2 class="font-display text-3xl mb-6">Checkout</h2>
-                    <form id="confirm-order-form">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                            <div>
-                                <h3 class="font-semibold mb-4 text-lg">1. Shipping Details</h3>
-                                <div class="space-y-4">
-                                    <input type="text" id="customer-name" placeholder="Full Name" class="block w-full border border-gray-300 rounded-md shadow-sm p-2" required value="${state.customerName !== 'Guest' ? state.customerName : ''}">
-                                    <input type="text" id="customer-address" placeholder="Address" class="block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
-                                    <input type="tel" id="customer-phone" placeholder="Phone Number" class="block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
+                <div class="p-6 md:p-8 flex flex-col h-full">
+                    <div class="flex-shrink-0 mb-6 flex justify-between items-center">
+                        <h2 class="font-display text-3xl">Checkout</h2>
+                        <button class="close-modal-btn text-gray-500 hover:text-gray-800"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="flex-grow overflow-y-auto pr-2">
+                        <form id="confirm-order-form">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                <div>
+                                    <h3 class="font-semibold mb-4 text-lg">1. Shipping Details</h3>
+                                    <div class="space-y-4">
+                                        <input type="text" id="customer-name" placeholder="Full Name" class="block w-full border border-gray-300 rounded-md shadow-sm p-2" required value="${state.customerName !== 'Guest' ? state.customerName : ''}">
+                                        <input type="text" id="customer-address" placeholder="Address" class="block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
+                                        <input type="tel" id="customer-phone" placeholder="Phone Number" class="block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
+                                    </div>
+                                    <h3 class="font-semibold mt-6 mb-2 text-lg">2. Delivery Method</h3>
+                                    <div id="delivery-options-container" class="space-y-2">
+                                        <div class="delivery-option p-3 rounded-lg flex items-center gap-4" data-delivery-cost="120">
+                                            <i data-lucide="truck" class="w-8 h-8 text-gray-600"></i>
+                                            <div><h4 class="font-bold">Inside Valley Delivery</h4><p class="text-xs text-gray-500">NPR 120 (1-2 days)</p></div>
+                                        </div>
+                                        <div class="delivery-option p-3 rounded-lg flex items-center gap-4" data-delivery-cost="220">
+                                            <i data-lucide="navigation" class="w-8 h-8 text-gray-600"></i>
+                                            <div><h4 class="font-bold">Outside Valley Delivery</h4><p class="text-xs text-gray-500">NPR 220 (2-4 days)</p></div>
+                                        </div>
+                                        <div class="delivery-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
+                                            <i data-lucide="globe" class="w-8 h-8 text-gray-600"></i>
+                                            <div><h4 class="font-bold">International Shipping</h4><p class="text-xs text-red-500">Available soon</p></div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <h3 class="font-semibold mt-6 mb-2 text-lg">2. Delivery Method</h3>
-                                <div id="delivery-options-container" class="space-y-2">
-                                    <div class="delivery-option p-3 rounded-lg flex items-center gap-4" data-delivery-cost="120">
-                                        <i data-lucide="truck" class="w-8 h-8 text-gray-600"></i>
-                                        <div><h4 class="font-bold">Inside Valley Delivery</h4><p class="text-xs text-gray-500">NPR 120 (1-2 days)</p></div>
+                                <div>
+                                    <h3 class="font-semibold mb-4 text-lg">3. Order Summary</h3>
+                                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                        <ul class="divide-y">${itemsSummary}</ul>
+                                        <div class="flex justify-between text-sm py-1 border-t mt-2 pt-2"><span class="text-gray-600">Subtotal</span><span class="font-medium">NPR ${subtotal.toLocaleString()}</span></div>
+                                        <div class="flex justify-between text-sm py-1"><span class="text-gray-600">Delivery Fee</span><span id="delivery-fee" class="font-medium">--</span></div>
+                                        <div class="flex justify-between font-bold text-lg pt-2 mt-2 border-t"><span>Total</span><span id="total-amount">--</span></div>
                                     </div>
-                                    <div class="delivery-option p-3 rounded-lg flex items-center gap-4" data-delivery-cost="220">
-                                        <i data-lucide="navigation" class="w-8 h-8 text-gray-600"></i>
-                                        <div><h4 class="font-bold">Outside Valley Delivery</h4><p class="text-xs text-gray-500">NPR 220 (2-4 days)</p></div>
-                                    </div>
-                                    <div class="delivery-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
-                                        <i data-lucide="globe" class="w-8 h-8 text-gray-600"></i>
-                                        <div><h4 class="font-bold">International Shipping</h4><p class="text-xs text-red-500">Available soon</p></div>
+                                    <h3 class="font-semibold mb-2 text-lg">4. Payment Method</h3>
+                                    <div class="space-y-2">
+                                        <div class="payment-option p-3 rounded-lg flex items-center gap-4 selected" data-method="cod">
+                                            <i data-lucide="hand-coins" class="w-8 h-8 text-gray-600"></i>
+                                            <div><h4 class="font-bold">Cash on Delivery</h4><p class="text-xs text-gray-500">Pay when your order arrives.</p></div>
+                                        </div>
+                                        <div class="payment-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
+                                            <i data-lucide="credit-card" class="w-8 h-8 text-gray-600"></i>
+                                            <div><h4 class="font-bold">eSewa</h4><p class="text-xs text-red-500">Available soon</p></div>
+                                        </div>
+                                        <div class="payment-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
+                                            <i data-lucide="credit-card" class="w-8 h-8 text-gray-600"></i>
+                                            <div><h4 class="font-bold">Khalti</h4><p class="text-xs text-red-500">Available soon</p></div>
+                                        </div>
+                                        <div class="payment-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
+                                            <i data-lucide="smartphone" class="w-8 h-8 text-gray-600"></i>
+                                            <div><h4 class="font-bold">Fonepay</h4><p class="text-xs text-red-500">Available soon</p></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div>
-                                <h3 class="font-semibold mb-4 text-lg">3. Order Summary</h3>
-                                <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                                    <ul class="divide-y">${itemsSummary}</ul>
-                                    <div class="flex justify-between text-sm py-1 border-t mt-2 pt-2"><span class="text-gray-600">Subtotal</span><span class="font-medium">NPR ${subtotal.toLocaleString()}</span></div>
-                                    <div class="flex justify-between text-sm py-1"><span class="text-gray-600">Delivery Fee</span><span id="delivery-fee" class="font-medium">--</span></div>
-                                    <div class="flex justify-between font-bold text-lg pt-2 mt-2 border-t"><span>Total</span><span id="total-amount">--</span></div>
-                                </div>
-                                <h3 class="font-semibold mb-2 text-lg">4. Payment Method</h3>
-                                <div class="space-y-2">
-                                    <div class="payment-option p-3 rounded-lg flex items-center gap-4 selected" data-method="cod">
-                                        <i data-lucide="hand-coins" class="w-8 h-8 text-gray-600"></i>
-                                        <div><h4 class="font-bold">Cash on Delivery</h4><p class="text-xs text-gray-500">Pay when your order arrives.</p></div>
-                                    </div>
-                                    <div class="payment-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Esewa_logo.webp/1200px-Esewa_logo.webp.png" alt="eSewa" class="h-8">
-                                        <div><h4 class="font-bold">eSewa</h4><p class="text-xs text-red-500">Available soon</p></div>
-                                    </div>
-                                    <div class="payment-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
-                                        <img src="https://images.seeklogo.com/logo-png/33/1/khalti-logo-png_seeklogo-337962.png" alt="Khalti" class="h-8">
-                                        <div><h4 class="font-bold">Khalti</h4><p class="text-xs text-red-500">Available soon</p></div>
-                                    </div>
-                                    <div class="payment-option p-3 rounded-lg flex items-center gap-4 opacity-50 cursor-not-allowed">
-                                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAq-YwrsBtGhl1N7rWNioVH5py-aT_n8kZIg&s" alt="Fonepay" class="h-8">
-                                        <div><h4 class="font-bold">Fonepay</h4><p class="text-xs text-red-500">Available soon</p></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-8 flex items-center justify-end">
-                            <button id="confirm-order-btn" type="submit" class="bg-violet-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-violet-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Confirm Order</button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
+                     <div class="mt-8 pt-6 border-t flex-shrink-0 flex items-center justify-end gap-4">
+                        <button type="button" class="close-modal-btn font-semibold text-violet-600 hover:underline">Add More Items</button>
+                        <button id="confirm-order-btn" type="submit" form="confirm-order-form" class="bg-violet-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-violet-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Confirm Order</button>
+                    </div>
                 </div>`;
-            renderModal(content, 'max-w-4xl');
+            renderModal(content, 'max-w-4xl', true);
         };
         
         const renderQuickViewModal = (product) => {
              const content = `
-                 <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
-                 <div class="flex flex-col md:flex-row">
-                     <div class="w-full md:w-1/2 p-4"><img src="${product.images[0]}" alt="${product.name}" class="w-full h-full object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';"></div>
-                     <div class="w-full md:w-1/2 p-8 flex flex-col text-center md:text-left">
-                         <h2 class="font-display text-3xl mb-2">${product.name}</h2>
-                         <p class="text-2xl text-violet-700 font-bold mb-4">NPR ${product.price.toLocaleString()}</p>
-                         <p class="text-gray-600 mb-6">${product.spec}</p>
-                         <div class="mt-auto flex flex-col items-center gap-4 w-full">
+                <div class="flex flex-col md:flex-row">
+                    <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                    <div class="w-full md:w-1/2 p-4"><img src="${product.images[0]}" alt="${product.name}" class="w-full h-full object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';"></div>
+                    <div class="w-full md:w-1/2 p-8 flex flex-col text-center md:text-left">
+                         <div class="modal-content-scroll">
+                            <h2 class="font-display text-3xl mb-2">${product.name}</h2>
+                            <p class="text-2xl text-violet-700 font-bold mb-4">NPR ${product.price.toLocaleString()}</p>
+                            <p class="text-gray-600 mb-6">${product.spec}</p>
+                         </div>
+                         <div class="mt-auto pt-6 flex flex-col items-center gap-4 w-full">
                              <button class="view-full-details-btn w-full bg-violet-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-violet-700 transition-colors" data-id="${product.id}">
                                  View Full Details
                              </button>
                          </div>
-                     </div>
-                 </div>`;
-             renderModal(content, 'max-w-4xl');
+                    </div>
+                </div>`;
+             renderModal(content, 'max-w-4xl', true);
+        };
+        
+        const renderMobileSearchModal = () => {
+            const content = `
+                <div class="p-4">
+                    <form id="search-form-mobile" class="relative">
+                        <input type="search" id="search-input-mobile" placeholder="Search for products..." class="w-full p-3 pl-10 border border-gray-300 rounded-full focus:ring-2 focus:ring-violet-300" autofocus>
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                    </form>
+                </div>`;
+            renderModal(content, 'max-w-md');
         };
 
         const renderProductDetailPage = (productId) => {
@@ -647,16 +677,16 @@
                 </div>
                 <div class="mt-16 border-t pt-8">
                     <h2 class="font-display text-3xl mb-8">You Might Also Like</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">${relatedProductsHTML}</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">${relatedProductsHTML}</div>
                 </div>
-            </div>`;
-            renderFooter();
+            </div>
+            ${getFooterHTML()}`;
             lucide.createIcons();
         };
         
         const renderOurStoryModal = () => {
              const content = `
-                 <div class="p-8 text-left">
+                <div class="p-8 text-left modal-content-scroll">
                      <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
                      <h2 class="font-display text-3xl mb-4 text-center">Our Story</h2>
                      <div class="text-gray-600 space-y-4">
@@ -666,8 +696,8 @@
                       <div class="mt-6 text-center">
                           <button class="close-modal-btn text-sm text-violet-600 hover:underline">Return to Homepage</button>
                       </div>
-                 </div>`;
-             renderModal(content, 'max-w-2xl');
+                </div>`;
+             renderModal(content, 'max-w-2xl', true);
         };
 
         const renderTrackOrderModal = () => {
@@ -686,28 +716,10 @@
             renderModal(content);
         };
 
-        // ===================================================================================
-        // IV. CORE LOGIC & ACTIONS
-        // ===================================================================================
-
-        const resetFilters = (products) => {
-            const prices = products.map(p => p.price);
-            state.filters = {
-                types: [],
-                colors: [],
-                sizes: [],
-                inStock: false,
-                minPrice: Math.min(...prices),
-                maxPrice: Math.max(...prices),
-                currentMin: Math.min(...prices),
-                currentMax: Math.max(...prices)
-            };
-        };
-
-        const renderFilters = (products) => {
-            const filtersSidebar = getEl('filters-sidebar');
-            if (!filtersSidebar || products.length === 0) return;
-
+        const getFilterContentHTML = () => {
+            const products = db.products.filter(p => p.mainCat === state.activeCategory);
+            if(products.length === 0) return '';
+            
             const allTypes = [...new Set(products.map(p => p.category))];
             const allColors = [...new Set(products.flatMap(p => p.colors || []))];
             const allSizes = [...new Set(products.flatMap(p => p.sizes || []))];
@@ -729,10 +741,9 @@
                     <input type="checkbox" class="filter-size" value="${size}" ${state.filters.sizes.includes(size) ? 'checked' : ''}>
                     <span>${size}</span>
                 </label>`).join('');
-
-            filtersSidebar.innerHTML = `
+            
+            return `
                 ${typesHTML.length > 0 ? `<div class="filter-section"><h3>Type</h3><div class="space-y-2">${typesHTML}</div></div>` : ''}
-                
                 <div class="filter-section">
                     <h3>Price Range</h3>
                     <input type="range" min="${state.filters.minPrice}" max="${state.filters.maxPrice}" value="${state.filters.currentMax}" id="price-range-slider">
@@ -741,10 +752,8 @@
                         <span id="price-range-value">NPR ${state.filters.currentMax.toLocaleString()}</span>
                     </div>
                 </div>
-
                 ${colorsHTML.length > 0 ? `<div class="filter-section"><h3>Color</h3><div class="space-y-2">${colorsHTML}</div></div>` : ''}
                 ${sizesHTML.length > 0 ? `<div class="filter-section"><h3>Size</h3><div class="space-y-2">${sizesHTML}</div></div>` : ''}
-                
                 <div class="filter-section">
                     <h3>Availability</h3>
                     <label class="flex items-center space-x-2 text-sm">
@@ -752,26 +761,62 @@
                         <span>In Stock Only</span>
                     </label>
                 </div>
-                <button id="reset-filters-btn" class="w-full text-sm text-violet-600 hover:underline">Reset Filters</button>
             `;
+        };
+
+        const renderMobileFilterModal = () => {
+            const filterContent = getFilterContentHTML();
+            const content = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                         <h2 class="font-display text-2xl">Filters</h2>
+                         <button class="close-modal-btn"><i data-lucide="x"></i></button>
+                    </div>
+                    <div id="mobile-filters-container">${filterContent}</div>
+                    <div class="mt-6 flex flex-col gap-2">
+                        <button id="apply-filters-btn" class="w-full bg-violet-600 text-white py-2 rounded-lg font-semibold">Apply Filters</button>
+                        <button id="reset-filters-btn" class="w-full text-sm text-violet-600 hover:underline">Reset Filters</button>
+                    </div>
+                </div>
+            `;
+            renderModal(content, 'max-w-md', true);
+        };
+
+
+        // ===================================================================================
+        // IV. CORE LOGIC & ACTIONS
+        // ===================================================================================
+
+        const resetFilters = (products) => {
+            const prices = products.map(p => p.price);
+            state.filters = {
+                types: [], colors: [], sizes: [],
+                inStock: false,
+                minPrice: Math.min(0, ...prices),
+                maxPrice: Math.max(100, ...prices),
+                currentMax: Math.max(100, ...prices)
+            };
+        };
+
+        const renderFilters = () => {
+            const filtersSidebar = getEl('filters-sidebar');
+            if (!filtersSidebar) return;
+            const content = getFilterContentHTML();
+            filtersSidebar.innerHTML = `${content}<button id="reset-filters-btn" class="w-full text-sm text-violet-600 hover:underline mt-4">Reset Filters</button>`;
         };
 
         const applyFiltersAndRenderGrid = (searchFilterFn = null) => {
             const productGrid = getEl('product-grid');
-            const filtersSidebar = getEl('filters-sidebar');
             if (!productGrid) return;
 
-            let baseProducts;
-            if (searchFilterFn) {
-                baseProducts = db.products.filter(searchFilterFn);
-                if (filtersSidebar) filtersSidebar.style.display = 'none';
-            } else if (state.activeCategory) {
-                 baseProducts = db.products.filter(p => p.mainCat === state.activeCategory);
-                if (filtersSidebar) filtersSidebar.style.display = 'block';
-                 // Only render filters if not a search result page
-                 renderFilters(baseProducts);
-            } else {
-                baseProducts = []; // Should not happen if logic is correct
+            let baseProducts = searchFilterFn 
+                ? db.products.filter(searchFilterFn) 
+                : state.activeCategory 
+                    ? db.products.filter(p => p.mainCat === state.activeCategory)
+                    : [];
+
+            if (!searchFilterFn) {
+                renderFilters();
             }
 
             const filteredProducts = baseProducts.filter(p => {
@@ -784,20 +829,12 @@
                 return true;
             });
             
-            const productsHTML = filteredProducts.map(p => createProductCard(p)).join('');
-            productGrid.innerHTML = productsHTML || `<p class="col-span-full text-center text-gray-500">No products match your criteria.</p>`;
+            productGrid.innerHTML = filteredProducts.map(p => createProductCard(p)).join('') || `<p class="col-span-full text-center text-gray-500">No products match your criteria.</p>`;
             lucide.createIcons();
         };
 
         const saveStateToLocalStorage = () => {
-            const appState = {
-                cart: db.cart,
-                wishlist: db.wishlist,
-                orders: db.orders,
-                orderCounter: state.orderCounter,
-                isLoggedIn: state.isLoggedIn,
-                customerName: state.customerName
-            };
+            const appState = { cart: db.cart, wishlist: db.wishlist, orders: db.orders, orderCounter: state.orderCounter, isLoggedIn: state.isLoggedIn, customerName: state.customerName };
             localStorage.setItem('kalakarState', JSON.stringify(appState));
         };
 
@@ -824,8 +861,7 @@
         const updateWishlist = () => {
             document.querySelectorAll('#wishlist-count, #mobile-wishlist-btn span').forEach(el => el.textContent = db.wishlist.length);
             document.querySelectorAll('.wishlist-toggle-btn, .wishlist-toggle-btn-card').forEach(btn => {
-                const isWished = db.wishlist.includes(btn.dataset.id);
-                btn.classList.toggle('active', isWished);
+                btn.classList.toggle('active', db.wishlist.includes(btn.dataset.id));
             });
             if(sidebarContainer.querySelector('.sidebar')?.querySelector('h2')?.textContent.includes('Wishlist')) {
                 renderWishlistSidebar();
@@ -835,18 +871,14 @@
 
         const handleAddToCart = (productId, quantity = 1) => {
             const product = db.products.find(p => p.id === productId);
-            if (product.stock === 0) {
-                showToast('Sorry, this item is sold out.', 'error'); return;
-            }
+            if (product.stock === 0) { showToast('Sorry, this item is sold out.', 'error'); return; }
             const existingItem = db.cart.find(i => i.id === productId);
             if (existingItem) {
                 existingItem.quantity = Math.min(product.stock, existingItem.quantity + quantity);
             } else {
                 db.cart.push({ id: productId, quantity: quantity });
             }
-            if (db.wishlist.includes(productId)) {
-                handleToggleWishlist(productId, false);
-            }
+            if (db.wishlist.includes(productId)) { handleToggleWishlist(productId, false); }
             showToast(`${product.name} added to cart!`, 'success');
             updateCart();
             updateWishlist();
@@ -861,9 +893,7 @@
                     item.quantity = product.stock;
                     showToast('Cannot add more than available stock.', 'info');
                 }
-                if (item.quantity <= 0) {
-                    db.cart = db.cart.filter(i => i.id !== productId);
-                }
+                if (item.quantity <= 0) { db.cart = db.cart.filter(i => i.id !== productId); }
                 updateCart();
             }
         };
@@ -891,11 +921,7 @@
             const confirmBtn = getEl('confirm-order-btn');
 
             if (state.deliveryCharge > 0) {
-                let subtotal = 0;
-                db.cart.forEach(item => {
-                    const product = db.products.find(p => p.id === item.id);
-                    subtotal += product.price * item.quantity;
-                });
+                let subtotal = db.cart.reduce((sum, item) => sum + (db.products.find(p => p.id === item.id).price * item.quantity), 0);
                 const total = subtotal + state.deliveryCharge;
                 deliveryFeeEl.textContent = `NPR ${state.deliveryCharge.toLocaleString()}`;
                 totalAmountEl.textContent = `NPR ${total.toLocaleString()}`;
@@ -906,14 +932,29 @@
                 confirmBtn.disabled = true;
             }
         };
+
+        const updateFiltersFromUI = (container) => {
+            state.filters.currentMax = parseInt(container.querySelector('#price-range-slider').value);
+            state.filters.inStock = container.querySelector('#filter-stock').checked;
+            state.filters.types = [...container.querySelectorAll('.filter-type:checked')].map(el => el.value);
+            state.filters.colors = [...container.querySelectorAll('.filter-color:checked')].map(el => el.value);
+            state.filters.sizes = [...container.querySelectorAll('.filter-size:checked')].map(el => el.value);
+        };
         
         // ===================================================================================
         // V. EVENT LISTENERS
         // ===================================================================================
         const setupEventListeners = () => {
             document.body.addEventListener('click', (e) => {
+                // If the click is on the dark overlay of a modal, close it.
+                if (e.target.classList.contains('modal-backdrop')) {
+                    closeModal();
+                    return;
+                }
+                
+                // Find the closest interactive element.
                 const target = e.target.closest('button, a, div.category-choice-card, div.delivery-option');
-                if (!target) return;
+                if (!target) return; // If not an interactive element, do nothing.
                 
                 const id = target.id;
                 const classList = target.classList;
@@ -926,8 +967,7 @@
                     state.activeProduct = null;
                     const productsForCategory = db.products.filter(p => p.mainCat === state.activeCategory);
                     resetFilters(productsForCategory);
-                    document.body.classList.remove('default-bg', 'jewelry-bg', 'cosmetics-bg');
-                    document.body.classList.add(state.activeCategory === 'Jewelry' ? 'jewelry-bg' : 'cosmetics-bg');
+                    document.body.className = `text-gray-800 ${state.activeCategory === 'Jewelry' ? 'jewelry-bg' : 'cosmetics-bg'}`;
                     categoryChoice.classList.add('hidden');
                     shopContent.classList.remove('hidden');
                     renderShopLayout();
@@ -935,12 +975,11 @@
                     e.preventDefault();
                     state.activeCategory = null;
                     state.activeProduct = null;
-                    document.body.classList.remove('jewelry-bg', 'cosmetics-bg');
-                    document.body.classList.add('default-bg');
+                    document.body.className = 'text-gray-800 default-bg';
                     shopContent.classList.add('hidden');
                     shopContent.innerHTML = '';
                     categoryChoice.classList.remove('hidden');
-                    getEl('search-input').value = '';
+                    document.querySelectorAll('#search-input-desktop, #search-input-mobile').forEach(i => i.value = '');
                     closeSidebar();
                     window.scrollTo(0,0);
                 } else if (id === 'back-to-shop') {
@@ -957,6 +996,8 @@
                 // --- Sidebar and Modal Controls ---
                 else if (id === 'cart-btn' || id === 'mobile-cart-btn') { e.preventDefault(); renderCartSidebar(); }
                 else if (id === 'wishlist-btn' || id === 'mobile-wishlist-btn') { e.preventDefault(); renderWishlistSidebar(); }
+                else if (id === 'mobile-search-btn') { e.preventDefault(); renderMobileSearchModal(); }
+                else if (id === 'mobile-filter-btn') { e.preventDefault(); renderMobileFilterModal(); }
                 else if (id === 'login-btn') { e.preventDefault(); renderLoginModal(); }
                 else if (id === 'signup-link') { e.preventDefault(); renderSignupModal(); }
                 else if (id === 'login-link') { e.preventDefault(); renderLoginModal(); }
@@ -979,131 +1020,111 @@
                 
                 // --- Product Actions ---
                 else if (classList.contains('add-to-cart-btn')) { e.preventDefault(); handleAddToCart(dataId); }
-                else if (classList.contains('wishlist-toggle-btn') || classList.contains('wishlist-toggle-btn-card')) {
-                    e.preventDefault(); handleToggleWishlist(dataId);
-                }
+                else if (classList.contains('wishlist-toggle-btn') || classList.contains('wishlist-toggle-btn-card')) { e.preventDefault(); handleToggleWishlist(dataId); }
                 else if (classList.contains('quick-view-btn')) {
                     e.preventDefault();
-                    const product = db.products.find(p => p.id === dataId);
-                    renderQuickViewModal(product);
+                    renderQuickViewModal(db.products.find(p => p.id === dataId));
                 }
                 else if(classList.contains('view-full-details-btn')) {
-                    e.preventDefault();
-                    closeModal();
-                    renderProductDetailPage(dataId);
-                    window.scrollTo(0, 0);
+                    e.preventDefault(); closeModal(); renderProductDetailPage(dataId); window.scrollTo(0, 0);
                 }
                 else if (classList.contains('remove-from-cart')) { e.preventDefault(); handleRemoveFromCart(dataId); }
-                else if (classList.contains('qty-change')) {
-                    e.preventDefault(); handleQtyChange(dataId, parseInt(target.dataset.change));
-                }
+                else if (classList.contains('qty-change')) { e.preventDefault(); handleQtyChange(dataId, parseInt(target.dataset.change)); }
 
                 // --- Checkout Actions ---
                 else if (classList.contains('delivery-option')) {
                     e.preventDefault();
                     if (target.classList.contains('opacity-50')) return;
                     state.deliveryCharge = parseInt(target.dataset.deliveryCost);
-                    document.querySelectorAll('.delivery-option').forEach(opt => opt.classList.remove('selected'));
+                    target.closest('.modal-box').querySelectorAll('.delivery-option').forEach(opt => opt.classList.remove('selected'));
                     target.classList.add('selected');
                     updateCheckoutTotals();
                 }
 
                 // --- Filter Actions ---
-                else if (id === 'reset-filters-btn') {
+                 else if (id === 'reset-filters-btn') {
                     const productsForCategory = db.products.filter(p => p.mainCat === state.activeCategory);
                     resetFilters(productsForCategory);
+                    if (document.getElementById('mobile-filters-container')) {
+                         renderMobileFilterModal(); // Re-render modal with reset values
+                    } else {
+                         applyFiltersAndRenderGrid();
+                    }
+                } else if (id === 'apply-filters-btn') {
+                    updateFiltersFromUI(getEl('mobile-filters-container'));
                     applyFiltersAndRenderGrid();
+                    closeModal();
                 }
 
                 lucide.createIcons();
             });
 
-            // Listener for filter changes (inputs, checkboxes)
-            shopContent.addEventListener('input', (e) => {
-                 if (e.target.id === 'price-range-slider') {
-                    state.filters.currentMax = parseInt(e.target.value);
-                    getEl('price-range-value').textContent = `NPR ${state.filters.currentMax.toLocaleString()}`;
-                    applyFiltersAndRenderGrid();
+            const handleFilterChange = (container) => {
+                if(!container) return;
+                updateFiltersFromUI(container);
+                applyFiltersAndRenderGrid();
+            };
+
+            document.body.addEventListener('input', (e) => {
+                 const container = e.target.closest('#filters-sidebar, #mobile-filters-container');
+                 if (e.target.id === 'price-range-slider' && container) {
+                    container.querySelector('#price-range-value').textContent = `NPR ${parseInt(e.target.value).toLocaleString()}`;
+                    if(e.target.closest('#filters-sidebar')) { // Only apply live for desktop
+                         handleFilterChange(container);
+                    }
                  }
             });
-            shopContent.addEventListener('change', (e) => {
-                 if (e.target.classList.contains('filter-type')) {
-                     const value = e.target.value;
-                     if (e.target.checked) state.filters.types.push(value);
-                     else state.filters.types = state.filters.types.filter(t => t !== value);
-                 } else if (e.target.classList.contains('filter-color')) {
-                     const value = e.target.value;
-                     if (e.target.checked) state.filters.colors.push(value);
-                     else state.filters.colors = state.filters.colors.filter(c => c !== value);
-                 } else if (e.target.classList.contains('filter-size')) {
-                     const value = e.target.value;
-                     if (e.target.checked) state.filters.sizes.push(value);
-                     else state.filters.sizes = state.filters.sizes.filter(s => s !== value);
-                 } else if (e.target.id === 'filter-stock') {
-                     state.filters.inStock = e.target.checked;
-                 } else { return; } // exit if not a filter change
-                 applyFiltersAndRenderGrid();
+            document.body.addEventListener('change', (e) => {
+                 const container = e.target.closest('#filters-sidebar');
+                 if(container && (e.target.classList.contains('filter-type') || e.target.classList.contains('filter-color') || e.target.classList.contains('filter-size') || e.target.id === 'filter-stock')) {
+                    handleFilterChange(container);
+                 }
             });
 
             document.body.addEventListener('submit', (e) => {
                 e.preventDefault();
-                if (e.target.id === 'search-form') {
-                    const query = getEl('search-input').value.toLowerCase();
+                const formId = e.target.id;
+                
+                if (formId === 'search-form' || formId === 'search-form-mobile') {
+                    const inputId = formId === 'search-form' ? 'search-input-desktop' : 'search-input-mobile';
+                    const query = getEl(inputId).value.toLowerCase();
                     if (!query) return;
                     
-                    const searchFilterFn = p => 
-                        p.name.toLowerCase().includes(query) || 
-                        p.description.toLowerCase().includes(query) ||
-                        p.tags.some(tag => tag.toLowerCase().includes(query));
-
+                    const searchFilterFn = p => p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query) || p.tags.some(tag => tag.toLowerCase().includes(query));
+                    
+                    if (formId === 'search-form-mobile') closeModal();
+                    
                     categoryChoice.classList.add('hidden');
                     shopContent.classList.remove('hidden');
-                    // Pass the search filter function to the shop layout renderer
                     renderShopLayout(`Search Results for "${query}"`, searchFilterFn);
-                    
                 }
-                else if (e.target.id === 'login-form' || e.target.id === 'signup-form') {
-                    const emailInput = e.target.querySelector('input[type="email"]');
+                else if (formId === 'login-form' || formId === 'signup-form') {
                     const nameInput = e.target.querySelector('input[type="text"]');
                     state.isLoggedIn = true;
-                    state.customerName = nameInput ? nameInput.value.split(' ')[0] : emailInput.value.split('@')[0];
+                    state.customerName = nameInput ? nameInput.value.split(' ')[0] : e.target.querySelector('input[type="email"]').value.split('@')[0];
                     closeModal();
                     saveStateToLocalStorage();
                     renderHeader();
                     showToast(`Welcome, ${state.customerName}!`, 'success');
-                } else if (e.target.id === 'confirm-order-form') {
+                } else if (formId === 'confirm-order-form') {
                     const name = getEl('customer-name').value;
                     const address = getEl('customer-address').value;
                     const phone = getEl('customer-phone').value;
-                    if (!name || !address || !phone) {
-                        showToast('Please fill in all shipping details.', 'error'); return;
-                    }
+                    if (!name || !address || !phone) { showToast('Please fill in all shipping details.', 'error'); return; }
                     
                     const orderId = `KAL${state.orderCounter++}`;
-                    db.orders.push({
-                        id: orderId,
-                        customerName: name,
-                        address: address,
-                        phone: phone,
-                        items: [...db.cart],
-                        status: 'Processing',
-                        date: new Date().toISOString()
-                    });
-
+                    db.orders.push({ id: orderId, customerName: name, address, phone, items: [...db.cart], status: 'Processing', date: new Date().toISOString() });
                     db.cart = [];
                     closeModal();
                     updateCart();
                     saveStateToLocalStorage();
                     showToast(`Order Confirmed! Your Order ID is ${orderId}.`, 'success');
-                } else if (e.target.id === 'track-order-form') {
+                } else if (formId === 'track-order-form') {
                     const orderIdToTrack = getEl('track-order-id').value.toUpperCase();
                     const order = db.orders.find(o => o.id === orderIdToTrack);
-                    const resultEl = getEl('order-status-result');
-                    if (order) {
-                        resultEl.innerHTML = `<p class="text-green-600 font-semibold">Order found! Status: <span class="bg-green-100 p-1 rounded">${order.status}</span></p>`;
-                    } else {
-                        resultEl.innerHTML = `<p class="text-red-500 font-semibold">Order ID not found. Please check the ID and try again.</p>`;
-                    }
+                    getEl('order-status-result').innerHTML = order
+                        ? `<p class="text-green-600 font-semibold">Order found! Status: <span class="bg-green-100 p-1 rounded">${order.status}</span></p>`
+                        : `<p class="text-red-500 font-semibold">Order ID not found. Please check and try again.</p>`;
                 }
             });
 
@@ -1113,8 +1134,7 @@
                   const progressBar = getEl('scroll-progress-bar');
                   if (progressBar) progressBar.style.height = `${progress}%`;
                   
-                  if(window.scrollY > 50) { document.body.classList.add('scrolling'); } 
-                  else { document.body.classList.remove('scrolling'); }
+                  document.body.classList.toggle('scrolling', window.scrollY > 50);
              });
         };
         
