@@ -128,6 +128,15 @@
         ::-webkit-scrollbar-track { background: #fffbf5; }
         ::-webkit-scrollbar-thumb { background: #a78bfa; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
+
+        /* --- Filter Styles --- */
+        .filter-section { border-bottom: 1px solid #e5e7eb; padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
+        .filter-section:last-child { border-bottom: none; }
+        .filter-section h3 { font-weight: 600; margin-bottom: 1rem; }
+        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: #d1d5db; border-radius: 2px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: #7c3aed; border-radius: 50%; cursor: pointer; }
+        input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: #7c3aed; border-radius: 50%; cursor: pointer; }
+
     </style>
 </head>
 <body class="text-gray-800 default-bg">
@@ -162,7 +171,7 @@
                 { id: "J015", mainCat: "Jewelry", category: "Pendant Sets", name: "Filigree Pendant Set", price: 5800, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLbt8WyHnjGfcSXZiBMbve262I_jdP-YMbtQ&s"], spec: "Delicate silver filigree work, with matching earrings.", description: "Showcasing the delicate art of filigree, this pendant set is a masterpiece of precision. The intricate floral design, crafted from fine silver threads, comes with perfectly matching earrings for a complete, elegant look.", tags: ['new-arrival'], stock: 10 },
                 { id: "J016", mainCat: "Jewelry", category: "Brooches", name: "Enamel Peacock Brooch", price: 3200, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTb_fOgYI9Rv7_klV2-zjKAxQd3txNrBm_dYw&s"], spec: "Vibrant enamel work on a beautifully crafted peacock brooch.", description: "Add a splash of color and artistry to your attire with this enamel peacock brooch. The vibrant colors and detailed craftsmanship capture the majestic beauty of Nepal's national bird.", tags: [], stock: 25 },
                 { id: "J017", mainCat: "Jewelry", category: "Nose Pins", name: "Golden Sun Nose Pin", price: 1800, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT631OcagG5IMgXy_2VQesMc4MlbYk_uG5tMA&s"], spec: "A simple yet elegant 18k gold plated sun motif nose pin.", description: "Shine bright with this elegant Golden Sun nose pin. The simple yet striking sun motif is plated in 18k gold, offering a touch of understated glamour for a modern, chic look.", tags: ['affordable', 'high-demand'], stock: 40 },
-                { id: "J018", mainCat: "Jewelry", category: "Bracelets", name: "Seven-Chakra Bracelet", price: 2200, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxnXMRth7CktTPJ9TJN3coYNtpFNE_yF-C4g&s"], spec: "Features seven different semi-precious stones.", description: "Align your energy with this beautiful Seven-Chakra bracelet. It features seven carefully selected semi-precious stones, each representing one of the body's energy centers. A meaningful and stylish accessory.", tags: ['new-arrival', 'featured'], stock: 30 },
+                { id: "J018", mainCat: "Jewelry", category: "Bracelets", name: "Seven-Chakra Bracelet", price: 2200, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxnXMRth7CktTPJ9TJN3coYNtpFNE_yF-C4g&s"], spec: "Features seven different semi-precious stones.", description: "Align your energy with this beautiful Seven-Chakra bracelet. It features seven carefully selected semi-precious stones, each representing one of the body's energy centers. A meaningful and stylish accessory.", tags: ['new-arrival', 'featured'], stock: 30, colors: ["Multicolor"] },
                 { id: "J019", mainCat: "Jewelry", category: "Necklaces", name: "Traditional Chandra Haar", price: 18500, images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShIoIfdOUqjhQ4kG3d_S49OQnl_yNjuRTWqQ&s"], spec: "A majestic multi-layered necklace, embodying Nepali heritage.", description: "The Chandra Haar is the epitome of Nepali bridal and festive wear. This majestic, multi-layered necklace is a symbol of prosperity and heritage, crafted with exceptional attention to detail to be treasured for generations.", tags: ['premium', 'festive-sale'], stock: 4 },
 
                 // Cosmetics
@@ -186,7 +195,8 @@
             customerName: 'Guest',
             selectedPaymentMethod: 'cod',
             deliveryCharge: 0, 
-            orderCounter: 1
+            orderCounter: 1,
+            filters: {} // NEW: To store active filter values
         };
 
         // ===================================================================================
@@ -228,19 +238,21 @@
              headerEl.innerHTML = `
                  <div class="container mx-auto px-6 py-3 flex justify-between items-center">
                      <a href="#" id="brand-logo" class="font-display text-3xl text-violet-800">Kalakar</a>
-                     <div class="flex-1 max-w-xl mx-4">
-                        <form id="search-form" class="relative">
-                            <input type="search" id="search-input" placeholder="Search for products..." class="w-full p-2 pl-10 border border-gray-300 rounded-full focus:ring-2 focus:ring-violet-300 focus:border-violet-300 transition-all">
-                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
-                        </form>
+                     <div class="flex-1 max-w-xl mx-4 hidden md:block">
+                         <form id="search-form" class="relative">
+                             <input type="search" id="search-input" placeholder="Search for products..." class="w-full p-2 pl-10 border border-gray-300 rounded-full focus:ring-2 focus:ring-violet-300 focus:border-violet-300 transition-all">
+                             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                         </form>
                      </div>
                      <div class="hidden md:flex items-center space-x-6">
                          <button id="wishlist-btn" class="relative flex items-center gap-2 text-gray-600 hover:text-violet-600">
                              <i data-lucide="heart" class="w-6 h-6"></i>
+                             <span class="hidden lg:block ml-1">Wishlist</span>
                              <span id="wishlist-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">${db.wishlist.length}</span>
                          </button>
                          <button id="cart-btn" class="relative flex items-center gap-2 text-gray-600 hover:text-violet-600">
                             <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                            <span class="hidden lg:block ml-1">Cart</span>
                             <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">${db.cart.reduce((sum, item) => sum + item.quantity, 0)}</span>
                          </button>
                      </div>
@@ -254,16 +266,14 @@
                  </div>`;
         };
 
-        const renderShopLayout = (title = null, filterFn = null) => {
-            const pageTitle = title ? title : `Discover our ${state.activeCategory}`;
-            const productsToRender = filterFn ? db.products.filter(filterFn) : db.products.filter(p => p.mainCat === state.activeCategory);
-
-            const productsHTML = productsToRender.map(p => createProductCard(p)).join('');
-            const backButtonHTML = state.activeCategory
+        const renderShopLayout = (pageTitleOverride = null, searchFilterFn = null) => {
+            const pageTitle = pageTitleOverride || `Discover our ${state.activeCategory}`;
+            
+            const backButtonHTML = state.activeCategory || pageTitleOverride
                 ? `<button id="back-to-categories" class="flex items-center gap-2 text-violet-600 font-semibold hover:text-violet-800">
-                     <i data-lucide="arrow-left"></i> Back to Categories
+                      <i data-lucide="arrow-left"></i> Back to Categories
                    </button>`
-                : `<div class="w-48"></div>`; 
+                : `<div class="w-48"></div>`;
 
             shopContent.innerHTML = `
                 <div class="container mx-auto px-4 py-12">
@@ -274,10 +284,17 @@
                         </h1>
                         <div class="w-48 text-right"></div>
                     </div>
-                    <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        ${productsHTML || `<p class="col-span-full text-center text-gray-500">No products found.</p>`}
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                        <aside id="filters-sidebar" class="lg:col-span-1 bg-white/60 p-6 rounded-lg shadow-sm h-fit self-start"></aside>
+                        <div id="product-grid-container" class="lg:col-span-3">
+                            <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                                </div>
+                        </div>
                     </div>
                 </div>`;
+            
+            // Initial render of filters and products
+            applyFiltersAndRenderGrid(searchFilterFn);
             renderFooter();
         };
 
@@ -300,7 +317,7 @@
                         <div class="description-tooltip">${product.spec}</div>
                         ${premiumTag || saleTag || newTag || stockTag}
                         <a href="#" class="product-link" data-id="${product.id}">
-                          <img src="${product.images[0]}" alt="${product.name}" class="w-full h-64 object-cover rounded-t-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';">
+                            <img src="${product.images[0]}" alt="${product.name}" class="w-full h-64 object-cover rounded-t-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';">
                         </a>
                         <div class="actions-overlay absolute inset-0 bg-black/40 flex items-center justify-center p-4 space-x-2 rounded-t-lg">
                             <button class="action-button quick-view-btn" data-id="${product.id}" style="transition-delay: 0.1s;" title="Quick View"><i data-lucide="eye" class="w-8 h-8 p-1.5 bg-white/80 rounded-full text-gray-800 pointer-events-none"></i></button>
@@ -318,52 +335,52 @@
                     </div>
                 </div>`;
         };
-        
+
         const renderFooter = () => {
-            const footer = document.createElement('footer');
-            footer.className = "bg-violet-900/95 text-white p-10 mt-16";
-            footer.innerHTML = `
-                <div class="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
-                    <div>
-                        <h3 class="font-display text-2xl mb-2">Kalakar</h3>
-                        <p class="text-violet-200 text-sm">Authentic crafts from the heart of Kathmandu.</p>
-                        <div class="mt-4 text-violet-200 text-sm space-y-1">
-                            <p><i data-lucide="phone" class="inline w-4 h-4 mr-2"></i> Helpdesk: +977-9800000000</p>
-                            <p><i data-lucide="message-circle" class="inline w-4 h-4 mr-2"></i> WhatsApp: +977-9811111111</p>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="font-bold uppercase tracking-wider mb-3">Shop</h4>
-                        <a href="#" class="block text-sm hover:text-violet-200 mb-2 category-link" data-category="Jewelry">Jewelry</a>
-                        <a href="#" class="block text-sm hover:text-violet-200 mb-2 category-link" data-category="Cosmetics">Cosmetics</a>
-                        <a href="#" id="track-order-link" class="block text-sm hover:text-violet-200 mb-2">Track My Order</a>
-                    </div>
-                    <div>
-                        <h4 class="font-bold uppercase tracking-wider mb-3">About</h4>
-                        <a href="#" id="our-story-link" class="block text-sm hover:text-violet-200 mb-2">Our Story</a>
-                        <a href="#" class="block text-sm hover:text-violet-200 mb-2">Artisans</a>
-                        <a href="#" class="block text-sm hover:text-violet-200 mb-2">Contact Us</a>
-                    </div>
-                    <div>
-                         <h4 class="font-bold uppercase tracking-wider mb-3">Follow Us</h4>
-                         <div class="flex justify-center md:justify-start space-x-4">
-                             <a href="#" class="hover:text-violet-200"><i data-lucide="instagram"></i></a>
-                             <a href="#" class="hover:text-violet-200"><i data-lucide="facebook"></i></a>
-                             <a href="#" class="hover:text-violet-200"><i data-lucide="twitter"></i></a>
-                             <a href="#" class="hover:text-violet-200"><i data-lucide="youtube"></i></a>
-                             <a href="#" class="hover:text-violet-200"><i data-lucide="linkedin"></i></a>
+             const footer = document.createElement('footer');
+             footer.className = "bg-violet-900/95 text-white p-10 mt-16";
+             footer.innerHTML = `
+                 <div class="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
+                     <div>
+                         <h3 class="font-display text-2xl mb-2">Kalakar</h3>
+                         <p class="text-violet-200 text-sm">Authentic crafts from the heart of Kathmandu.</p>
+                         <div class="mt-4 text-violet-200 text-sm space-y-1">
+                             <p><i data-lucide="phone" class="inline w-4 h-4 mr-2"></i> Helpdesk: +977-9800000000</p>
+                             <p><i data-lucide="message-circle" class="inline w-4 h-4 mr-2"></i> WhatsApp: +977-9811111111</p>
                          </div>
-                    </div>
-                </div>
-                <div class="text-center text-violet-300 text-xs mt-10 border-t border-violet-700 pt-6">
+                     </div>
+                     <div>
+                         <h4 class="font-bold uppercase tracking-wider mb-3">Shop</h4>
+                         <a href="#" class="block text-sm hover:text-violet-200 mb-2 category-link" data-category="Jewelry">Jewelry</a>
+                         <a href="#" class="block text-sm hover:text-violet-200 mb-2 category-link" data-category="Cosmetics">Cosmetics</a>
+                         <a href="#" id="track-order-link" class="block text-sm hover:text-violet-200 mb-2">Track My Order</a>
+                     </div>
+                     <div>
+                         <h4 class="font-bold uppercase tracking-wider mb-3">About</h4>
+                         <a href="#" id="our-story-link" class="block text-sm hover:text-violet-200 mb-2">Our Story</a>
+                         <a href="#" class="block text-sm hover:text-violet-200 mb-2">Artisans</a>
+                         <a href="#" class="block text-sm hover:text-violet-200 mb-2">Contact Us</a>
+                     </div>
+                     <div>
+                          <h4 class="font-bold uppercase tracking-wider mb-3">Follow Us</h4>
+                          <div class="flex justify-center md:justify-start space-x-4">
+                              <a href="#" class="hover:text-violet-200"><i data-lucide="instagram"></i></a>
+                              <a href="#" class="hover:text-violet-200"><i data-lucide="facebook"></i></a>
+                              <a href="#" class="hover:text-violet-200"><i data-lucide="twitter"></i></a>
+                              <a href="#" class="hover:text-violet-200"><i data-lucide="youtube"></i></a>
+                              <a href="#" class="hover:text-violet-200"><i data-lucide="linkedin"></i></a>
+                          </div>
+                     </div>
+                 </div>
+                 <div class="text-center text-violet-300 text-xs mt-10 border-t border-violet-700 pt-6">
                      &copy; ${new Date().getFullYear()} Kalakar Nepal. All Rights Reserved. Swayambhu, Kathmandu, Nepal.
-                </div>
-            `;
-            const existingFooter = shopContent.querySelector('footer');
-            if (existingFooter) {
-                existingFooter.remove();
-            }
-            shopContent.appendChild(footer);
+                 </div>
+             `;
+             const existingFooter = shopContent.querySelector('footer');
+             if (existingFooter) {
+                 existingFooter.remove();
+             }
+             shopContent.appendChild(footer);
         };
 
         const renderModal = (content, maxWidth = 'max-w-md') => {
@@ -399,9 +416,9 @@
 
         const renderCartSidebar = () => {
             let itemsHTML = `<div class="text-center my-8">
-                                <p class="text-gray-500 mb-4">Your cart is empty.</p>
-                                <button class="go-shopping-btn bg-violet-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-violet-700">Go Shopping</button>
-                             </div>`;
+                                 <p class="text-gray-500 mb-4">Your cart is empty.</p>
+                                 <button class="go-shopping-btn bg-violet-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-violet-700">Go Shopping</button>
+                               </div>`;
             let subtotal = 0;
             if(db.cart.length > 0) {
                  itemsHTML = db.cart.map(item => {
@@ -438,9 +455,9 @@
         
         const renderWishlistSidebar = () => {
             let itemsHTML = `<div class="text-center my-8">
-                                <p class="text-gray-500 mb-4">Your wishlist is empty.</p>
-                                <button class="go-shopping-btn bg-violet-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-violet-700">Go Shopping</button>
-                             </div>`;
+                                 <p class="text-gray-500 mb-4">Your wishlist is empty.</p>
+                                 <button class="go-shopping-btn bg-violet-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-violet-700">Go Shopping</button>
+                               </div>`;
             if(db.wishlist.length > 0) {
                  itemsHTML = db.wishlist.map(id => {
                      const product = db.products.find(p => p.id === id);
@@ -477,9 +494,10 @@
                         <input type="password" placeholder="Password" class="w-full p-2 border rounded mb-4" required>
                         <button type="submit" class="w-full bg-violet-600 text-white py-3 rounded-lg font-semibold hover:bg-violet-700">Login</button>
                     </form>
-                    <p class="text-sm text-gray-600 mt-4">
-                        Don't have an account? <a href="#" id="signup-link" class="font-semibold text-violet-600 hover:underline">Register here</a>
-                    </p>
+                    <div class="text-sm text-gray-600 mt-4">
+                        <p>Don't have an account? <a href="#" id="signup-link" class="font-semibold text-violet-600 hover:underline">Register here</a></p>
+                        <button class="close-modal-btn text-sm text-violet-600 hover:underline mt-2">Or continue shopping</button>
+                    </div>
                 </div>`;
             renderModal(content);
         };
@@ -496,11 +514,12 @@
                         <input type="password" placeholder="Password" class="w-full p-2 border rounded mb-4" required>
                         <button type="submit" class="w-full bg-violet-600 text-white py-3 rounded-lg font-semibold hover:bg-violet-700">Register</button>
                     </form>
-                     <p class="text-sm text-gray-600 mt-4">
-                         Already have an account? <a href="#" id="login-link" class="font-semibold text-violet-600 hover:underline">Login here</a>
-                    </p>
+                    <div class="text-sm text-gray-600 mt-4">
+                        <p>Already have an account? <a href="#" id="login-link" class="font-semibold text-violet-600 hover:underline">Login here</a></p>
+                        <button class="close-modal-btn text-sm text-violet-600 hover:underline mt-2">Or continue shopping</button>
+                    </div>
                 </div>`;
-                 renderModal(content);
+            renderModal(content);
         }
 
         const renderCheckoutModal = () => {
@@ -581,21 +600,21 @@
         
         const renderQuickViewModal = (product) => {
              const content = `
-                <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
-                <div class="flex flex-col md:flex-row">
-                    <div class="w-full md:w-1/2 p-4"><img src="${product.images[0]}" alt="${product.name}" class="w-full h-full object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';"></div>
-                    <div class="w-full md:w-1/2 p-8 flex flex-col text-center md:text-left">
-                        <h2 class="font-display text-3xl mb-2">${product.name}</h2>
-                        <p class="text-2xl text-violet-700 font-bold mb-4">NPR ${product.price.toLocaleString()}</p>
-                        <p class="text-gray-600 mb-6">${product.spec}</p>
-                        <div class="mt-auto flex flex-col items-center gap-4 w-full">
-                            <button class="view-full-details-btn w-full bg-violet-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-violet-700 transition-colors" data-id="${product.id}">
-                                View Full Details
-                            </button>
-                        </div>
-                    </div>
-                </div>`;
-            renderModal(content, 'max-w-4xl');
+                 <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                 <div class="flex flex-col md:flex-row">
+                     <div class="w-full md:w-1/2 p-4"><img src="${product.images[0]}" alt="${product.name}" class="w-full h-full object-cover rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x600/cccccc/333333?text=Image+Not+Found';"></div>
+                     <div class="w-full md:w-1/2 p-8 flex flex-col text-center md:text-left">
+                         <h2 class="font-display text-3xl mb-2">${product.name}</h2>
+                         <p class="text-2xl text-violet-700 font-bold mb-4">NPR ${product.price.toLocaleString()}</p>
+                         <p class="text-gray-600 mb-6">${product.spec}</p>
+                         <div class="mt-auto flex flex-col items-center gap-4 w-full">
+                             <button class="view-full-details-btn w-full bg-violet-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-violet-700 transition-colors" data-id="${product.id}">
+                                 View Full Details
+                             </button>
+                         </div>
+                     </div>
+                 </div>`;
+             renderModal(content, 'max-w-4xl');
         };
 
         const renderProductDetailPage = (productId) => {
@@ -637,18 +656,18 @@
         
         const renderOurStoryModal = () => {
              const content = `
-                <div class="p-8 text-left">
-                    <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
-                    <h2 class="font-display text-3xl mb-4 text-center">Our Story</h2>
-                    <div class="text-gray-600 space-y-4">
-                        <p>Kalakar was born from a dream—a dream held by our founder, <strong>Kunal Gupta</strong>, to bring the soul of Nepali craftsmanship to the world. Raised amidst the vibrant artistry of Kathmandu, Kunal developed a deep appreciation for the intricate skills passed down through generations. However, he also saw the severe challenges artisans faced, from economic instability to a lack of global recognition.</p>
-                        <p>Despite facing his own set of hardships in a country grappling with change, Kunal was determined. He started Kalakar not just as a business, but as a movement. His vision was to create a sustainable platform that empowers local artisans, preserves our rich cultural heritage, and offers authentic, handcrafted treasures to you.</p>
-                    </div>
-                     <div class="mt-6 text-center">
-                        <button class="close-modal-btn text-sm text-violet-600 hover:underline">Return to Homepage</button>
-                    </div>
-                </div>`;
-            renderModal(content, 'max-w-2xl');
+                 <div class="p-8 text-left">
+                     <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"><i data-lucide="x"></i></button>
+                     <h2 class="font-display text-3xl mb-4 text-center">Our Story</h2>
+                     <div class="text-gray-600 space-y-4">
+                         <p>Kalakar was born from a dream—a dream held by our founder, <strong>Kunal Gupta</strong>, to bring the soul of Nepali craftsmanship to the world. Raised amidst the vibrant artistry of Kathmandu, Kunal developed a deep appreciation for the intricate skills passed down through generations. However, he also saw the severe challenges artisans faced, from economic instability to a lack of global recognition.</p>
+                         <p>Despite facing his own set of hardships in a country grappling with change, Kunal was determined. He started Kalakar not just as a business, but as a movement. His vision was to create a sustainable platform that empowers local artisans, preserves our rich cultural heritage, and offers authentic, handcrafted treasures to you.</p>
+                     </div>
+                      <div class="mt-6 text-center">
+                          <button class="close-modal-btn text-sm text-violet-600 hover:underline">Return to Homepage</button>
+                      </div>
+                 </div>`;
+             renderModal(content, 'max-w-2xl');
         };
 
         const renderTrackOrderModal = () => {
@@ -670,6 +689,106 @@
         // ===================================================================================
         // IV. CORE LOGIC & ACTIONS
         // ===================================================================================
+
+        const resetFilters = (products) => {
+            const prices = products.map(p => p.price);
+            state.filters = {
+                types: [],
+                colors: [],
+                sizes: [],
+                inStock: false,
+                minPrice: Math.min(...prices),
+                maxPrice: Math.max(...prices),
+                currentMin: Math.min(...prices),
+                currentMax: Math.max(...prices)
+            };
+        };
+
+        const renderFilters = (products) => {
+            const filtersSidebar = getEl('filters-sidebar');
+            if (!filtersSidebar || products.length === 0) return;
+
+            const allTypes = [...new Set(products.map(p => p.category))];
+            const allColors = [...new Set(products.flatMap(p => p.colors || []))];
+            const allSizes = [...new Set(products.flatMap(p => p.sizes || []))];
+
+            const typesHTML = allTypes.map(type => `
+                <label class="flex items-center space-x-2 text-sm">
+                    <input type="checkbox" class="filter-type" value="${type}" ${state.filters.types.includes(type) ? 'checked' : ''}>
+                    <span>${type}</span>
+                </label>`).join('');
+            
+            const colorsHTML = allColors.map(color => `
+                <label class="flex items-center space-x-2 text-sm">
+                    <input type="checkbox" class="filter-color" value="${color}" ${state.filters.colors.includes(color) ? 'checked' : ''}>
+                    <span>${color}</span>
+                </label>`).join('');
+
+            const sizesHTML = allSizes.map(size => `
+                <label class="flex items-center space-x-2 text-sm">
+                    <input type="checkbox" class="filter-size" value="${size}" ${state.filters.sizes.includes(size) ? 'checked' : ''}>
+                    <span>${size}</span>
+                </label>`).join('');
+
+            filtersSidebar.innerHTML = `
+                ${typesHTML.length > 0 ? `<div class="filter-section"><h3>Type</h3><div class="space-y-2">${typesHTML}</div></div>` : ''}
+                
+                <div class="filter-section">
+                    <h3>Price Range</h3>
+                    <input type="range" min="${state.filters.minPrice}" max="${state.filters.maxPrice}" value="${state.filters.currentMax}" id="price-range-slider">
+                    <div class="flex justify-between text-xs mt-2">
+                        <span>NPR ${state.filters.minPrice.toLocaleString()}</span>
+                        <span id="price-range-value">NPR ${state.filters.currentMax.toLocaleString()}</span>
+                    </div>
+                </div>
+
+                ${colorsHTML.length > 0 ? `<div class="filter-section"><h3>Color</h3><div class="space-y-2">${colorsHTML}</div></div>` : ''}
+                ${sizesHTML.length > 0 ? `<div class="filter-section"><h3>Size</h3><div class="space-y-2">${sizesHTML}</div></div>` : ''}
+                
+                <div class="filter-section">
+                    <h3>Availability</h3>
+                    <label class="flex items-center space-x-2 text-sm">
+                        <input type="checkbox" id="filter-stock" ${state.filters.inStock ? 'checked' : ''}>
+                        <span>In Stock Only</span>
+                    </label>
+                </div>
+                <button id="reset-filters-btn" class="w-full text-sm text-violet-600 hover:underline">Reset Filters</button>
+            `;
+        };
+
+        const applyFiltersAndRenderGrid = (searchFilterFn = null) => {
+            const productGrid = getEl('product-grid');
+            const filtersSidebar = getEl('filters-sidebar');
+            if (!productGrid) return;
+
+            let baseProducts;
+            if (searchFilterFn) {
+                baseProducts = db.products.filter(searchFilterFn);
+                if (filtersSidebar) filtersSidebar.style.display = 'none';
+            } else if (state.activeCategory) {
+                 baseProducts = db.products.filter(p => p.mainCat === state.activeCategory);
+                if (filtersSidebar) filtersSidebar.style.display = 'block';
+                 // Only render filters if not a search result page
+                 renderFilters(baseProducts);
+            } else {
+                baseProducts = []; // Should not happen if logic is correct
+            }
+
+            const filteredProducts = baseProducts.filter(p => {
+                const { types, colors, sizes, inStock, currentMax } = state.filters;
+                if (inStock && p.stock === 0) return false;
+                if (p.price > currentMax) return false;
+                if (types.length > 0 && !types.includes(p.category)) return false;
+                if (colors.length > 0 && !(p.colors || []).some(c => colors.includes(c))) return false;
+                if (sizes.length > 0 && !(p.sizes || []).some(s => sizes.includes(s))) return false;
+                return true;
+            });
+            
+            const productsHTML = filteredProducts.map(p => createProductCard(p)).join('');
+            productGrid.innerHTML = productsHTML || `<p class="col-span-full text-center text-gray-500">No products match your criteria.</p>`;
+            lucide.createIcons();
+        };
+
         const saveStateToLocalStorage = () => {
             const appState = {
                 cart: db.cart,
@@ -805,6 +924,8 @@
                     e.preventDefault();
                     state.activeCategory = target.dataset.category;
                     state.activeProduct = null;
+                    const productsForCategory = db.products.filter(p => p.mainCat === state.activeCategory);
+                    resetFilters(productsForCategory);
                     document.body.classList.remove('default-bg', 'jewelry-bg', 'cosmetics-bg');
                     document.body.classList.add(state.activeCategory === 'Jewelry' ? 'jewelry-bg' : 'cosmetics-bg');
                     categoryChoice.classList.add('hidden');
@@ -819,12 +940,13 @@
                     shopContent.classList.add('hidden');
                     shopContent.innerHTML = '';
                     categoryChoice.classList.remove('hidden');
+                    getEl('search-input').value = '';
                     closeSidebar();
                     window.scrollTo(0,0);
                 } else if (id === 'back-to-shop') {
                     e.preventDefault();
                     state.activeProduct = null;
-                    renderShopLayout(null, p => p.mainCat === state.activeCategory);
+                    renderShopLayout();
                     window.scrollTo(0,0);
                 } else if (classList.contains('product-link')) {
                     e.preventDefault();
@@ -886,7 +1008,41 @@
                     updateCheckoutTotals();
                 }
 
+                // --- Filter Actions ---
+                else if (id === 'reset-filters-btn') {
+                    const productsForCategory = db.products.filter(p => p.mainCat === state.activeCategory);
+                    resetFilters(productsForCategory);
+                    applyFiltersAndRenderGrid();
+                }
+
                 lucide.createIcons();
+            });
+
+            // Listener for filter changes (inputs, checkboxes)
+            shopContent.addEventListener('input', (e) => {
+                 if (e.target.id === 'price-range-slider') {
+                    state.filters.currentMax = parseInt(e.target.value);
+                    getEl('price-range-value').textContent = `NPR ${state.filters.currentMax.toLocaleString()}`;
+                    applyFiltersAndRenderGrid();
+                 }
+            });
+            shopContent.addEventListener('change', (e) => {
+                 if (e.target.classList.contains('filter-type')) {
+                     const value = e.target.value;
+                     if (e.target.checked) state.filters.types.push(value);
+                     else state.filters.types = state.filters.types.filter(t => t !== value);
+                 } else if (e.target.classList.contains('filter-color')) {
+                     const value = e.target.value;
+                     if (e.target.checked) state.filters.colors.push(value);
+                     else state.filters.colors = state.filters.colors.filter(c => c !== value);
+                 } else if (e.target.classList.contains('filter-size')) {
+                     const value = e.target.value;
+                     if (e.target.checked) state.filters.sizes.push(value);
+                     else state.filters.sizes = state.filters.sizes.filter(s => s !== value);
+                 } else if (e.target.id === 'filter-stock') {
+                     state.filters.inStock = e.target.checked;
+                 } else { return; } // exit if not a filter change
+                 applyFiltersAndRenderGrid();
             });
 
             document.body.addEventListener('submit', (e) => {
@@ -894,14 +1050,17 @@
                 if (e.target.id === 'search-form') {
                     const query = getEl('search-input').value.toLowerCase();
                     if (!query) return;
-                    const results = db.products.filter(p => 
+                    
+                    const searchFilterFn = p => 
                         p.name.toLowerCase().includes(query) || 
                         p.description.toLowerCase().includes(query) ||
-                        p.tags.some(tag => tag.toLowerCase().includes(query))
-                    );
+                        p.tags.some(tag => tag.toLowerCase().includes(query));
+
                     categoryChoice.classList.add('hidden');
                     shopContent.classList.remove('hidden');
-                    renderShopLayout(`Search Results for "${query}"`, () => results.includes.bind(results)());
+                    // Pass the search filter function to the shop layout renderer
+                    renderShopLayout(`Search Results for "${query}"`, searchFilterFn);
+                    
                 }
                 else if (e.target.id === 'login-form' || e.target.id === 'signup-form') {
                     const emailInput = e.target.querySelector('input[type="email"]');
@@ -949,13 +1108,13 @@
             });
 
              window.addEventListener('scroll', () => {
-                 const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-                 const progress = (window.scrollY / totalHeight) * 100;
-                 const progressBar = getEl('scroll-progress-bar');
-                 if (progressBar) progressBar.style.height = `${progress}%`;
-                 
-                 if(window.scrollY > 50) { document.body.classList.add('scrolling'); } 
-                 else { document.body.classList.remove('scrolling'); }
+                  const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+                  const progress = (window.scrollY / totalHeight) * 100;
+                  const progressBar = getEl('scroll-progress-bar');
+                  if (progressBar) progressBar.style.height = `${progress}%`;
+                  
+                  if(window.scrollY > 50) { document.body.classList.add('scrolling'); } 
+                  else { document.body.classList.remove('scrolling'); }
              });
         };
         
